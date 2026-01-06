@@ -1,12 +1,108 @@
 // 設定
 const API_URL = 'https://script.google.com/macros/s/AKfycbyTqlvUn6xbUJAwUO_piVGiUHyNtii6Pp3UgCoT06dZuBqqypqktz10RF0ZXJodZ-l_/exec';
+const FETCH_TIMEOUT = 5000; // 5秒
 
-// データ管理
-let meals = [];
+// サンプルデータ（読み込み失敗時のフォールバック用）
+const SAMPLE_MEALS = [
+    {
+        id: 'sample-1',
+        createdAt: new Date().toISOString(),
+        category: '牛',
+        name: 'ハンバーグ',
+        mainIngredient: '牛肉',
+        memo: '牛肉、玉ねぎ、パン粉、卵、牛乳',
+        favorite: true,
+        lastAte: ''
+    },
+    {
+        id: 'sample-2',
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        category: '牛',
+        name: 'ステーキ',
+        mainIngredient: '牛肉',
+        memo: '牛肉、にんにく、バター、塩コショウ',
+        favorite: false,
+        lastAte: ''
+    },
+    {
+        id: 'sample-3',
+        createdAt: new Date(Date.now() - 172800000).toISOString(),
+        category: '牛',
+        name: '牛丼',
+        mainIngredient: '牛肉',
+        memo: '牛肉、玉ねぎ、ご飯、醤油、みりん',
+        favorite: true,
+        lastAte: ''
+    },
+    {
+        id: 'sample-4',
+        createdAt: new Date(Date.now() - 259200000).toISOString(),
+        category: '豚',
+        name: 'とんかつ',
+        mainIngredient: '豚ロース',
+        memo: '豚ロース、パン粉、卵、小麦粉、キャベツ',
+        favorite: true,
+        lastAte: ''
+    },
+    {
+        id: 'sample-5',
+        createdAt: new Date(Date.now() - 345600000).toISOString(),
+        category: '豚',
+        name: '生姜焼き',
+        mainIngredient: '豚肉',
+        memo: '豚肉、生姜、醤油、みりん、キャベツ',
+        favorite: false,
+        lastAte: ''
+    },
+    {
+        id: 'sample-6',
+        createdAt: new Date(Date.now() - 432000000).toISOString(),
+        category: '豚',
+        name: '角煮',
+        mainIngredient: '豚バラ',
+        memo: '豚バラ、醤油、酒、砂糖、にんにく',
+        favorite: false,
+        lastAte: ''
+    },
+    {
+        id: 'sample-7',
+        createdAt: new Date(Date.now() - 518400000).toISOString(),
+        category: '鶏',
+        name: '唐揚げ',
+        mainIngredient: '鶏もも肉',
+        memo: '鶏もも肉、醤油、にんにく、生姜、片栗粉',
+        favorite: true,
+        lastAte: ''
+    },
+    {
+        id: 'sample-8',
+        createdAt: new Date(Date.now() - 604800000).toISOString(),
+        category: '鶏',
+        name: '親子丼',
+        mainIngredient: '鶏むね肉',
+        memo: '鶏むね肉、卵、玉ねぎ、ご飯、醤油、みりん',
+        favorite: true,
+        lastAte: ''
+    },
+    {
+        id: 'sample-9',
+        createdAt: new Date(Date.now() - 691200000).toISOString(),
+        category: '鶏',
+        name: 'チキンカレー',
+        mainIngredient: '鶏もも肉',
+        memo: '鶏もも肉、玉ねぎ、にんじん、じゃがいも、カレールー',
+        favorite: false,
+        lastAte: ''
+    }
+];
+
+// データ管理（初期値としてサンプルデータを設定）
+let meals = [...SAMPLE_MEALS];
 let editingIndex = -1;
 let searchKeyword = '';
 let filterCategory = 'all'; // all, 肉, 魚, 野菜, その他
 let isLoading = false;
+let useSampleData = true; // サンプルデータ使用フラグ（初期状態はtrue）
 
 // カテゴリーボタンの処理
 let selectedCategory = '';
@@ -67,12 +163,37 @@ saveBtn.addEventListener('click', async () => {
     try {
         saveBtn.disabled = true;
         saveBtn.textContent = '保存中...';
-        await saveMealToSheet(meal);
-        showToast('スプレッドシートに保存しました！');
-        await fetchMealsFromSheet(); // 最新を再取得
+        
+        // サンプルデータ使用中はローカルに追加のみ
+        if (useSampleData) {
+            if (editingIndex >= 0) {
+                meals[editingIndex] = meal;
+            } else {
+                meals.unshift(meal);
+            }
+            showToast('ローカルに保存しました（サンプルデータモード）');
+            renderMeals();
+        } else {
+            // スプレッドシートに保存を試みる
+            try {
+                await saveMealToSheet(meal);
+                showToast('スプレッドシートに保存しました！');
+                await fetchMealsFromSheet(); // 最新を再取得
+            } catch (saveError) {
+                console.error('保存エラー:', saveError);
+                // 保存失敗時もローカルに追加
+                if (editingIndex >= 0) {
+                    meals[editingIndex] = meal;
+                } else {
+                    meals.unshift(meal);
+                }
+                showToast('ローカルに保存しました（スプレッドシートへの保存に失敗）');
+                renderMeals();
+            }
+        }
     } catch (e) {
+        console.error('予期しないエラー:', e);
         alert('保存に失敗しました。時間をおいて再度お試しください。');
-        console.error(e);
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = editingIndex >= 0 ? '更新' : '保存';
@@ -297,14 +418,16 @@ window.deleteMeal = function(index) {
     if (confirm('このおかずを削除しますか？')) {
         const target = meals[index];
         meals.splice(index, 1);
-        // スプレッドシート削除（削除APIが未提供の場合はクライアント側のみ）
-        try {
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'delete', id: target?.id })
-            }).catch(() => {});
-        } catch (_) {}
+        // サンプルデータ使用中でない場合のみスプレッドシートに削除を送信
+        if (!useSampleData) {
+            try {
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', id: target?.id })
+                }).catch(() => {});
+            } catch (_) {}
+        }
         renderMeals();
         resetForm();
     }
@@ -318,13 +441,16 @@ document.getElementById('clearBtn').addEventListener('click', () => {
     }
     if (confirm('すべてのおかずを削除しますか？この操作は取り消せません。')) {
         meals = [];
-        try {
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'clear' })
-            }).catch(() => {});
-        } catch (_) {}
+        // サンプルデータ使用中でない場合のみスプレッドシートに削除を送信
+        if (!useSampleData) {
+            try {
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'clear' })
+                }).catch(() => {});
+            } catch (_) {}
+        }
         editingIndex = -1;
         resetForm();
         saveBtn.textContent = '保存';
@@ -370,18 +496,57 @@ suggestBtn.addEventListener('click', () => {
     `;
 });
 
+// タイムアウト付きfetch
+function fetchWithTimeout(url, timeout = FETCH_TIMEOUT) {
+    return Promise.race([
+        fetch(url),
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('タイムアウト')), timeout)
+        )
+    ]);
+}
+
 // スプレッドシートから取得
 async function fetchMealsFromSheet() {
     isLoading = true;
-    renderMeals();
+    renderMeals(); // 読み込み中を表示
+    
     try {
-        const res = await fetch(API_URL);
+        const startTime = Date.now();
+        const res = await fetchWithTimeout(API_URL, FETCH_TIMEOUT);
+        
+        // レスポンスチェック
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
         const data = await res.json();
+        const elapsedTime = Date.now() - startTime;
+        
+        // 5秒以上かかった場合はサンプルデータを使用
+        if (elapsedTime >= FETCH_TIMEOUT) {
+            throw new Error('読み込みがタイムアウトしました');
+        }
+        
         const rows = Array.isArray(data) ? data : (data.data || []);
-        meals = rows.map(row => normalizeMeal(row)).filter(Boolean).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        // データが空の場合はサンプルデータを維持
+        if (rows.length === 0) {
+            console.log('スプレッドシートにデータがありません。サンプルデータを継続使用します。');
+            // mealsは既にサンプルデータなので変更不要
+            useSampleData = true;
+        } else {
+            // スプレッドシートのデータで更新
+            meals = rows.map(row => normalizeMeal(row)).filter(Boolean).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            useSampleData = false;
+        }
+        
     } catch (e) {
-        console.error(e);
-        alert('読み込みに失敗しました。時間をおいて再度お試しください。');
+        // エラー時もalert()を出さず、静かにサンプルデータを使用
+        console.log('スプレッドシートからの読み込みに失敗しました。サンプルデータを表示します:', e.message);
+        // mealsは既にサンプルデータなので変更不要
+        useSampleData = true;
+        // トーストも出さない（ユーザーにエラーを意識させない）
     } finally {
         isLoading = false;
         renderMeals();
@@ -429,5 +594,15 @@ function normalizeMeal(row) {
     };
 }
 
-// ページ読み込み時にデータを読み込む
-fetchMealsFromSheet();
+// ページ読み込み時に初期表示とデータ読み込み
+// DOMContentLoadedを待ってから実行（より安全）
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        renderMeals(); // まずサンプルデータを表示
+        fetchMealsFromSheet(); // その後スプレッドシートから取得を試みる
+    });
+} else {
+    // DOMが既に読み込まれている場合
+    renderMeals(); // まずサンプルデータを表示
+    fetchMealsFromSheet(); // その後スプレッドシートから取得を試みる
+}
