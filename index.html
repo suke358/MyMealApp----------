@@ -54,29 +54,34 @@
             <button class="save-btn" id="saveBtn">保存</button>
         </div>
         
-        <div class="meals-section">
-            <div class="meals-header">
-                <div>
-                    <h2>おかずメニュー表</h2>
-                    <span class="menu-badge">TODAY'S SPECIAL</span>
-                </div>
-                <button class="clear-btn" id="clearBtn">全削除</button>
-            </div>
+<div class="meals-section">
+    <div class="meals-header">
+        <div>
+            <h2>おかずメニュー表</h2>
+            <span class="menu-badge">TODAY'S SPECIAL</span>
+        </div>
+        <button class="clear-btn" id="clearBtn">全削除</button>
+    </div>
 
-            <div class="controls-row">
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="食材名や料理名でさがす（例：鶏、にんじん、味噌）">
-                    <span class="search-icon">🔍</span>
-                </div>
-                <div class="filter-chips" id="filterChips">
-                    <button class="filter-chip active" data-filter="all">すべて</button>
-                    <button class="filter-chip" data-filter="肉">肉料理</button>
-                    <button class="filter-chip" data-filter="魚">魚料理</button>
-                    <button class="filter-chip" data-filter="野菜">野菜</button>
-                    <button class="filter-chip" data-filter="その他">その他</button>
-                </div>
-            </div>
+    <div class="controls-row">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="食材名や料理名でさがす（例：鶏、にんじん、味噌）" oninput="filterMeals()">
+            <span class="search-icon">🔍</span>
+        </div>
 
+        <div class="filter-chips" id="filterChips">
+            <button class="filter-chip active" data-filter="all">すべて</button>
+            <button class="filter-chip" data-filter="牛">🐄 牛</button>
+            <button class="filter-chip" data-filter="豚">🐷 豚</button>
+            <button class="filter-chip" data-filter="鶏">🐔 鶏</button>
+            <button class="filter-chip" data-filter="魚">🐟 魚</button>
+            <button class="filter-chip" data-filter="野菜">🥬 野菜</button>
+            <button class="filter-chip" data-filter="その他">🍽️ その他</button>
+        </div>
+    </div>
+    
+    </div>
+    
             <div class="suggestion-wrapper">
                 <div class="suggestion-top">
                     <div class="suggestion-title">今日のおかずを相談する</div>
