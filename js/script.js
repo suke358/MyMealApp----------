@@ -75,7 +75,6 @@ function filterList(category) {
 
     // エクスポート・インポート
     document.getElementById('exportBtn').addEventListener('click', exportData);
-    document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
     document.getElementById('importFile').addEventListener('change', importData);
 });
 
@@ -417,21 +416,30 @@ function exportData() {
 // 12. データインポート
 // ==========================================
 function importData(event) {
+    alert("ボタンは押されました。ファイル読み込みを開始します。");
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
+        const content = e.target.result;
+        if (!content || content.trim() === '') {
+            alert('ファイルが空です。');
+            return;
+        }
         try {
-            const importedMeals = JSON.parse(e.target.result);
+            const importedMeals = JSON.parse(content);
             if (confirm('現在のデータを上書きしますか？')) {
                 allMeals = importedMeals;
                 localStorage.setItem('meals', JSON.stringify(allMeals));
-                loadMeals();
+                displayMeals(allMeals);
                 alert('データを読み込みました。');
             }
         } catch (error) {
-            alert('ファイルの形式が正しくありません。');
+            alert('ファイルの形式がJSONではありません。エラー: ' + error.message);
         }
+    };
+    reader.onerror = function() {
+        alert('ファイルの読み込みに失敗しました。ファイルが正しく選択されているか確認してください。');
     };
     reader.readAsText(file);
 }
