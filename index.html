@@ -9,88 +9,45 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>🍽️ MyMeal おかず提案ツール</h1>
-        <p class="subtitle">その日の気分や冷蔵庫の中から、ぴったりのおかずをパッと決めるメニュー表</p>
-        
-        <div class="form-section">
-            <div class="form-group">
-                <label>カテゴリー</label>
-                <div class="category-buttons">
-                    <button class="category-btn beef" data-category="牛">🐄 牛</button>
-                    <button class="category-btn pork" data-category="豚">🐷 豚</button>
-                    <button class="category-btn chicken" data-category="鶏">🐔 鶏</button>
-                    <button class="category-btn fish" data-category="魚">🐟 魚</button>
-                    <button class="category-btn vegetable" data-category="野菜">🥬 野菜</button>
-                    <button class="category-btn other" data-category="その他">🍽️ その他</button>
-                </div>
-            </div>
+<div class="container">
+    <h1>🍽️ MyMeal おかず提案ツール</h1>
+    <p class="subtitle">その日の気分や冷蔵庫の中から、ぴったりのおかずをパッと決めるメニュー表</p>
+    
+    <div class="form-section">
+        <div class="form-group search-and-filter-area">
+            <label>おかずを登録・検索する</label>
             
-            <div class="form-group">
-                <label for="mealName">食事名</label>
-                <input type="text" id="mealName" placeholder="例：ハンバーグ定食">
-            </div>
-            
-            <div class="form-group">
-                <label for="mainIngredient">メイン食材</label>
-                <input type="text" id="mainIngredient" placeholder="例：牛肉 / 鶏むね / さば缶 など">
-            </div>
-            
-            <div class="form-group">
-                <label for="memo">メモ・材料</label>
-                <textarea id="memo" placeholder="例：牛肉、玉ねぎ、パン粉、卵..."></textarea>
+            <div class="category-buttons">
+                <button class="category-btn beef" data-category="牛">🐄 牛</button>
+                <button class="category-btn pork" data-category="豚">🐷 豚</button>
+                <button class="category-btn chicken" data-category="鶏">🐔 鶏</button>
+                <button class="category-btn fish" data-category="魚">🐟 魚</button>
+                <button class="category-btn vegetable" data-category="野菜">🥬 野菜</button>
+                <button class="category-btn other" data-category="その他">🍽️ その他</button>
             </div>
 
-            <div class="form-group" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-                <div style="flex:1 1 160px;">
-                    <label for="lastAte">最後に食べた日</label>
-                    <input type="date" id="lastAte">
-                </div>
-                <label style="display:flex; align-items:center; gap:8px; font-weight:600; color:#333; cursor:pointer;">
-                    <input type="checkbox" id="favorite" style="width:20px; height:20px;"> お気に入り
-                </label>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="食材名や料理名でさがす（例：鶏、にんじん、味噌）" oninput="filterMeals()">
+                <span class="search-icon">🔍</span>
             </div>
-            
-            <button class="save-btn" id="saveBtn">保存</button>
         </div>
         
-        <div class="meals-section">
-            <div class="meals-header">
-                <div>
-                    <h2>おかずメニュー表</h2>
-                    <span class="menu-badge">TODAY'S SPECIAL</span>
-                </div>
-                <button class="clear-btn" id="clearBtn">全削除</button>
-            </div>
-
-            <div class="controls-row">
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="食材名や料理名でさがす（例：鶏、にんじん、味噌）">
-                    <span class="search-icon">🔍</span>
-                </div>
-                <div class="filter-chips" id="filterChips">
-                    <button class="filter-chip active" data-filter="all">すべて</button>
-                    <button class="filter-chip" data-filter="肉">肉料理</button>
-                    <button class="filter-chip" data-filter="魚">魚料理</button>
-                    <button class="filter-chip" data-filter="野菜">野菜</button>
-                    <button class="filter-chip" data-filter="その他">その他</button>
-                </div>
-            </div>
-
-            <div class="suggestion-wrapper">
-                <div class="suggestion-top">
-                    <div class="suggestion-title">今日のおかずを相談する</div>
-                    <button class="suggestion-btn" id="suggestBtn">
-                        🎲 今日のおかず
-                    </button>
-                </div>
-                <p class="suggestion-note">登録済みのおかずの中から、いまの条件に合う一品をランダムでご提案します。</p>
-                <div id="suggestionArea"></div>
-            </div>
-
-            <div id="mealsList"></div>
+        <div class="form-group">
+            <label for="mealName">食事名</label>
+            <input type="text" id="mealName" placeholder="例：ハンバーグ定食">
         </div>
+        
+        <div class="form-group">
+            <label for="mainIngredient">メイン食材</label>
+            <input type="text" id="mainIngredient" placeholder="例：牛肉 / 鶏むね / さば缶 など">
+        </div>
+        
+        <button class="save-btn" id="saveBtn">保存</button>
     </div>
+
+    <div class="meals-section">
+        </div>
+</div>
 
     <script src="js/script.js"></script>
 </body>
