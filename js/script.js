@@ -430,9 +430,9 @@ function importData(event) {
             const importedMeals = JSON.parse(content);
             if (confirm('現在のデータを上書きしますか？')) {
                 allMeals = importedMeals;
-                localStorage.setItem('meals', JSON.stringify(allMeals));
-                displayMeals(allMeals);
-                alert('データを読み込みました。');
+                localStorage.setItem('allMeals', JSON.stringify(allMeals));
+                alert("同期に成功しました！");
+                location.reload();
             }
         } catch (error) {
             alert('ファイルの形式がJSONではありません。エラー: ' + error.message);
