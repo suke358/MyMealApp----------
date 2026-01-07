@@ -761,6 +761,10 @@ textarea {
     background: #d1b3d9;
 }
 
+.genre-tag.noodle {
+    background: #f39c12;
+}
+
 .edit-btn, .delete-btn {
     width: 30px;
     height: 30px;
