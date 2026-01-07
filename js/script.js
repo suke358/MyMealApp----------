@@ -64,9 +64,6 @@ function filterList(category) {
         }
     });
 }
-    // 全削除ボタン
-    document.getElementById('clearBtn').addEventListener('click', clearAllMeals);
-
     // おすすめボタン
     document.getElementById('suggestBtn').addEventListener('click', suggestMeal);
 
@@ -416,7 +413,6 @@ function exportData() {
 // 12. データインポート
 // ==========================================
 function importData(event) {
-    alert("ボタンは押されました。ファイル読み込みを開始します。");
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -431,7 +427,7 @@ function importData(event) {
             if (confirm('現在のデータを上書きしますか？')) {
                 allMeals = importedMeals;
                 localStorage.setItem('allMeals', JSON.stringify(allMeals));
-                alert("同期に成功しました！");
+                alert("データを読み込みました！");
                 location.reload();
             }
         } catch (error) {
