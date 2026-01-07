@@ -561,7 +561,10 @@ textarea {
 
 .meal-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    position: absolute;
+    right: 15px;
+    top: 15px;
 }
 
 .empty-state {
