@@ -7,6 +7,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzS6EsnM7soDU7xW2yht
 // 2. グローバル変数
 // ==========================================
 let selectedCategory = '';
+let selectedGenre = '';
 let allMeals = [];
 
 // ==========================================
@@ -19,6 +20,15 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             selectedCategory = this.dataset.category;
+        });
+    });
+
+    // ジャンルボタンのイベントリスナー
+    document.querySelectorAll('.genre-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedGenre = this.dataset.genre;
         });
     });
 
@@ -106,6 +116,8 @@ function displayMeals(meals) {
         const name = meal.料理名 || meal.name || '名前なし';
         const ingredient = meal.メイン食材 || meal.mainIngredient || '-';
         const memo = meal.メモ || meal.memo || '';
+        const genre = meal.ジャンル || meal.genre || '';
+        const genreClass = genre === '和食' ? 'japanese' : genre === '洋食' ? 'western' : genre === '中華' ? 'chinese' : 'other';
 
         item.innerHTML = `
             <div class="meal-header" style="display:flex; justify-content:space-between; align-items:center;">
@@ -118,6 +130,7 @@ function displayMeals(meals) {
                 ${lastAteText ? `<p class="last-ate">${lastAteText}</p>` : ''}
             </div>
             <span class="category-tag">${category}</span>
+            ${genre ? `<span class="genre-tag ${genreClass}">${genre}</span>` : ''}
         `;
         mealList.appendChild(item);
     });
@@ -146,7 +159,8 @@ function filterMeals() {
         const matchesSearch = !searchTerm ||
             (meal.料理名 && meal.料理名.toLowerCase().includes(searchTerm)) ||
             (meal.メイン食材 && meal.メイン食材.toLowerCase().includes(searchTerm)) ||
-            (meal.メモ && meal.メモ.toLowerCase().includes(searchTerm));
+            (meal.メモ && meal.メモ.toLowerCase().includes(searchTerm)) ||
+            (meal.ジャンル && meal.ジャンル.toLowerCase().includes(searchTerm));
 
         const matchesFilter = activeFilter === 'all' ||
             (activeFilter === '肉' && ['牛', '豚', '鶏'].includes(meal.カテゴリー)) ||
@@ -211,10 +225,16 @@ function saveMeal() {
         return;
     }
 
+    if (!selectedGenre) {
+        alert("ジャンルを選択してください！");
+        return;
+    }
+
     const data = {
         "料理名": name,
         "メイン食材": mainIngredient,
         "カテゴリー": selectedCategory,
+        "ジャンル": selectedGenre,
         "メモ": memo,
         "最後に食べた日": lastAte,
         "お気に入り": favorite ? "はい" : "いいえ"
@@ -233,6 +253,8 @@ function saveMeal() {
     document.getElementById('favorite').checked = false;
     document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
     selectedCategory = '';
+    document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+    selectedGenre = '';
     
     // リスト更新
     loadMeals();

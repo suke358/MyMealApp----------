@@ -122,6 +122,61 @@ label {
     box-shadow: 0 5px 15px rgba(155, 89, 182, 0.4);
 }
 
+.genre-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.genre-btn {
+    padding: 18px 12px;
+    border: 3px solid #e0e0e0;
+    border-radius: 15px;
+    background: white;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #333;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.genre-btn.active {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.genre-btn.japanese.active {
+    border-color: #3498db;
+    background: #3498db;
+    box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+}
+
+.genre-btn.western.active {
+    border-color: #27ae60;
+    background: #27ae60;
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+}
+
+.genre-btn.chinese.active {
+    border-color: #e74c3c;
+    background: #e74c3c;
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+}
+
+.genre-btn.other.active {
+    border-color: #9b59b6;
+    background: #9b59b6;
+    box-shadow: 0 5px 15px rgba(155, 89, 182, 0.4);
+}
+
 input[type="text"],
 textarea {
     width: 100%;
@@ -633,4 +688,41 @@ textarea {
 
 .delete-btn:hover {
     transform: scale(1.2);
+}
+
+.category-tag {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    background: #667eea;
+    margin-right: 8px;
+}
+
+.genre-tag {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    background: #ff7e5f;
+}
+
+.genre-tag.japanese {
+    background: #3498db;
+}
+
+.genre-tag.western {
+    background: #27ae60;
+}
+
+.genre-tag.chinese {
+    background: #e74c3c;
+}
+
+.genre-tag.other {
+    background: #9b59b6;
 }
