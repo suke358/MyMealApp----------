@@ -60,25 +60,19 @@ async function saveMeal() {
     }
 }
 
-// スマホからスプレッドシートへ保存する魔法のコード
 async function saveMeal() {
     const name = document.getElementById('mealName').value;
     const ingredient = document.getElementById('mealIngredient').value;
     const category = document.getElementById('mealCategory').value;
 
-    if (!name) {
-        alert("料理名を入れてね！");
-        return;
-    }
+    if (!name) { alert("料理名を入れてね！"); return; }
 
+    // GASのコードに合わせて「日本語の項目名」で送る
     const data = {
-        id: Date.now(), // IDを追加
-        category: category,
-        name: name,
-        ingredients: ingredient,
-        memo: "",
-        rating: 5,
-        lastEaten: new Date().toLocaleDateString()
+        "料理名": name,
+        "メイン食材": ingredient,
+        "カテゴリー": category,
+        "メモ": "スマホから登録"
     };
 
     try {
@@ -87,12 +81,9 @@ async function saveMeal() {
             body: JSON.stringify(data)
         });
         alert("スプレッドシートに保存したよ！");
-        // 入力欄を空にする
         document.getElementById('mealName').value = '';
-        document.getElementById('mealIngredient').value = '';
-        loadMeals(); // 一覧を再読み込みして最新にする
+        loadMeals(); 
     } catch (error) {
-        console.error('Save error:', error);
-        alert("保存に失敗しちゃった...");
+        alert("保存に失敗しました。URLを確認してください。");
     }
 }
