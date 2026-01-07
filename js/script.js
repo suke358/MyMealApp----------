@@ -28,15 +28,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // 検索機能
     document.getElementById('searchInput').addEventListener('input', filterMeals);
 
-    // フィルターチップ
-    document.querySelectorAll('.filter-chip').forEach(chip => {
-        chip.addEventListener('click', function() {
-            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
-            filterMeals();
-        });
-    });
+// フィルターボタン（チップ）をクリックした時の処理
+document.querySelectorAll('.filter-chip').forEach(button => {
+    button.addEventListener('click', () => {
+        // アクティブな色の切り替え
+        document.querySelectorAll('.filter-chip').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
 
+        const filterValue = button.getAttribute('data-filter');
+        filterList(filterValue); // リストを絞り込む関数を呼ぶ
+    });
+});
+
+function filterList(category) {
+    const items = document.querySelectorAll('.meal-item'); // 各おかずの要素
+    items.forEach(item => {
+        // 各アイテムが持っているカテゴリーデータを確認
+        const itemCategory = item.getAttribute('data-category'); 
+        
+        if (category === 'all' || itemCategory === category) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
     // 全削除ボタン
     document.getElementById('clearBtn').addEventListener('click', clearAllMeals);
 
@@ -80,18 +96,24 @@ function displayMeals(meals) {
     }
 
     meals.forEach(meal => {
-        const card = document.createElement('div');
-        card.className = 'meal-card';
+        const item = document.createElement('div');
+        item.className = 'meal-item';
+        item.setAttribute('data-category', meal.カテゴリー || 'その他');
         const favoriteIcon = meal.お気に入り === 'はい' ? '⭐' : '';
         const lastAteText = meal['最後に食べた日'] ? `<small>最後に食べた日: ${meal['最後に食べた日']}</small>` : '';
-        card.innerHTML = `
-            <h3>${meal.料理名 || '名前なし'} ${favoriteIcon}</h3>
-            <p><strong>メイン:</strong> ${meal.メイン食材 || '-'}</p>
-            ${meal.メモ ? `<p class="memo">${meal.メモ}</p>` : ''}
-            ${lastAteText}
+        item.innerHTML = `
+            <div class="meal-header">
+                <h4 class="meal-name">${meal.料理名 || '名前なし'}</h4>
+                <span class="favorite-icon">${favoriteIcon}</span>
+            </div>
+            <div class="meal-details">
+                <p class="main-ingredient"><strong>メイン食材:</strong> ${meal.メイン食材 || '-'}</p>
+                ${meal.メモ ? `<p class="memo">${meal.メモ}</p>` : ''}
+                ${lastAteText ? `<p class="last-ate">${lastAteText}</p>` : ''}
+            </div>
             <span class="category-tag">${meal.カテゴリー || '未分類'}</span>
         `;
-        mealList.appendChild(card);
+        mealList.appendChild(item);
     });
 }
 

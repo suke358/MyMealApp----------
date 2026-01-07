@@ -571,3 +571,46 @@ textarea {
         font-size: 28px;
     }
 }
+
+/* おかずリスト全体の枠 */
+#mealsList {
+    display: grid;
+    grid-template-columns: 1fr; /* スマホでは1列 */
+    gap: 15px;
+    margin-top: 20px;
+}
+
+/* おかず1つずつのカード */
+.meal-item {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 軽い影で浮かせる */
+    border-left: 5px solid #ff7e5f; /* カテゴリー色などのアクセント線 */
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* 料理名を目立たせる */
+.meal-name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* サブ情報（メイン食材やカテゴリー） */
+.meal-info {
+    font-size: 14px;
+    color: #666;
+    display: flex;
+    gap: 10px;
+}
+
+/* 「メイン：-」などのラベル */
+.info-label {
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
