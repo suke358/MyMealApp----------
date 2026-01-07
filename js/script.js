@@ -181,30 +181,35 @@ async function saveMeal() {
     };
 
     try {
-        const response = await fetch(SCRIPT_URL, {
+        // --- ここから差し替え ---//
+        await fetch(SCRIPT_URL, {
             method: 'POST',
+            mode: 'no-cors', // これがセキュリティエラーを防ぐ重要ポイント！
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(data)
         });
 
-        if (response.ok) {
-            alert("保存しました！");
-            // フォームをリセット
-            document.getElementById('mealName').value = '';
-            document.getElementById('mainIngredient').value = '';
-            document.getElementById('memo').value = '';
-            document.getElementById('lastAte').value = '';
-            document.getElementById('favorite').checked = false;
-            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-            selectedCategory = '';
-            loadMeals(); // リストを更新
-        } else {
-            alert("保存に失敗しました。");
-        }
+        // no-corsモードは「成功したか」がブラウザで判定できないため、
+        // 実行されたら「保存しました」とみなして進むのが一番スムーズです
+        alert("送信しました！スプレッドシートを確認してください");
+
+        // フォームをリセット
+        document.getElementById('mealName').value = '';
+        document.getElementById('mainIngredient').value = '';
+        document.getElementById('memo').value = '';
+        document.getElementById('lastAte').value = '';
+        document.getElementById('favorite').checked = false;
+        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        selectedCategory = '';
+        
+        // リスト更新（エラーが出る場合は一旦コメントアウトしてもOK）
+        if (typeof loadMeals === 'function') loadMeals(); 
+        // --- ここまで差し替え ---
+
     } catch (error) {
-        console.error('Save error:', error);
+                console.error('Save error:', error);
         alert("保存に失敗しました。");
     }
 }
