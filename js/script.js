@@ -263,6 +263,16 @@ function saveMeal() {
         return;
     }
 
+    // 新規登録の場合のみ重複チェック
+    if (editingIndex === null) {
+        const normalizedName = name.toLowerCase().trim();
+        const isDuplicate = allMeals.some(meal => meal.料理名 && meal.料理名.toLowerCase().trim() === normalizedName);
+        if (isDuplicate) {
+            const confirmAdd = confirm(`『${name}』はすでに登録されています。このまま追加しますか？`);
+            if (!confirmAdd) return;
+        }
+    }
+
     if (!selectedCategory) {
         alert("カテゴリーを選択してください！");
         return;
