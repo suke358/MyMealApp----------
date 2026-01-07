@@ -1,73 +1,65 @@
+// ==========================================
+// 1. 基本設定（最新のURLに差し替え済み）
+// ==========================================
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFmpne8cohd-rGQfK5CK32CSAs1q7dP1l1YtajJ3FTUj_34BJmlc1FBB0Sl1GDdZZDxg/exec";
+
+// ==========================================
+// 2. データの読み込み処理
+// ==========================================
+async function loadMeals() {
+    const mealList = document.getElementById('mealList');
+    if (!mealList) return;
+    
+    mealList.innerHTML = '<p class="loading">データを読み込み中...</p>';
+
+    try {
+        const response = await fetch(SCRIPT_URL);
+        const meals = await response.json();
+        displayMeals(meals);
+    } catch (error) {
+        console.error('Error:', error);
+        mealList.innerHTML = '<p class="error">読み込みに失敗しました。</p>';
+    }
+}
+
+// ==========================================
+// 3. 画面への表示処理
+// ==========================================
 function displayMeals(meals) {
     const mealList = document.getElementById('mealList');
-    mealList.innerHTML = ''; // 読み込み中の文字を消す
+    mealList.innerHTML = '';
 
     if (!meals || meals.length === 0) {
-        mealList.innerHTML = '<p class="no-data">献立データが見つかりませんでした。</p>';
+        mealList.innerHTML = '<p class="no-data">データがありません</p>';
         return;
     }
 
     meals.forEach(meal => {
-        // カードの枠を作る
         const card = document.createElement('div');
         card.className = 'meal-card';
-
-        // 中身の文字を作る（スプレッドシートの1行目の項目名とピッタリ合わせています）
         card.innerHTML = `
             <h3>${meal.料理名 || '名前なし'}</h3>
-            <div class="meal-details">
-                <p><strong>メイン:</strong> ${meal.メイン食材 || '-'}</p>
-                <p class="memo">${meal["メモ(コツ)"] || ''}</p>
-            </div>
+            <p><strong>メイン:</strong> ${meal.メイン食材 || '-'}</p>
+            ${meal["メモ(コツ)"] ? `<p class="memo">${meal["メモ(コツ)"]}</p>` : ''}
             <span class="category-tag">${meal.カテゴリー || '未分類'}</span>
         `;
-        
-        // 画面に追加する
         mealList.appendChild(card);
     });
 }
 
-// スマホからスプレッドシートへ保存する魔法のコード
+// ==========================================
+// 4. スプレッドシートへの保存処理
+// ==========================================
 async function saveMeal() {
     const name = document.getElementById('mealName').value;
     const ingredient = document.getElementById('mealIngredient').value;
     const category = document.getElementById('mealCategory').value;
 
-    if (!name) {
-        alert("料理名を入れてね！");
-        return;
+    if (!name) { 
+        alert("料理名を入れてね！"); 
+        return; 
     }
 
-    const data = {
-        料理名: name,
-        メイン食材: ingredient,
-        カテゴリー: category
-    };
-
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(data)
-        });
-        alert("スプレッドシートに保存したよ！");
-        // 入力欄を空にする
-        document.getElementById('mealName').value = '';
-        document.getElementById('mealIngredient').value = '';
-        loadMeals(); // 一覧を再読み込みして最新にする
-    } catch (error) {
-        console.error('Save error:', error);
-        alert("保存に失敗しちゃった...");
-    }
-}
-
-async function saveMeal() {
-    const name = document.getElementById('mealName').value;
-    const ingredient = document.getElementById('mealIngredient').value;
-    const category = document.getElementById('mealCategory').value;
-
-    if (!name) { alert("料理名を入れてね！"); return; }
-
-    // GASのコードに合わせて「日本語の項目名」で送る
     const data = {
         "料理名": name,
         "メイン食材": ingredient,
@@ -76,14 +68,26 @@ async function saveMeal() {
     };
 
     try {
+        // 保存中はボタンを連打できないように通知
+        console.log("送信中...");
+        
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
+            mode: 'no-cors', // GASへのPOSTでエラーが出るのを防ぐおまじない
             body: JSON.stringify(data)
         });
-        alert("スプレッドシートに保存したよ！");
+
+        // no-corsモードの場合、成功・失敗の判定ができないため、送信したら成功とみなす
+        alert("スプレッドシートに送信しました！");
         document.getElementById('mealName').value = '';
-        loadMeals(); 
+        document.getElementById('mealIngredient').value = '';
+        setTimeout(loadMeals, 1000); // 1秒後にリストを更新
+        
     } catch (error) {
-        alert("保存に失敗しました。URLを確認してください。");
+        console.error('Save error:', error);
+        alert("保存に失敗しました。");
     }
 }
+
+// ページを開いた時に実行
+window.onload = loadMeals;
