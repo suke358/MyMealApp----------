@@ -443,6 +443,7 @@ textarea {
     margin-bottom: 8px;
     border-left: 5px solid #667eea;
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .meal-item.beef {
@@ -703,26 +704,28 @@ textarea {
 
 .genre-tag {
     display: inline-block;
-    padding: 4px 8px;
+    padding: 2px 6px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
     color: white;
-    background: #ff7e5f;
+    position: absolute;
+    top: 10px;
+    left: 10px;
 }
 
 .genre-tag.japanese {
-    background: #3498db;
+    background: #a8d8f0;
 }
 
 .genre-tag.western {
-    background: #27ae60;
+    background: #f5d76e;
 }
 
 .genre-tag.chinese {
-    background: #e74c3c;
+    background: #f5a9a9;
 }
 
 .genre-tag.other {
-    background: #9b59b6;
+    background: #d1b3d9;
 }
