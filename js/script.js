@@ -8,6 +8,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzS6EsnM7soDU7xW2yht
 // ==========================================
 let selectedCategory = '';
 let selectedGenre = '';
+let editingIndex = null;
 let allMeals = [];
 
 // ==========================================
@@ -123,7 +124,10 @@ function displayMeals(meals) {
             ${genre ? `<span class="genre-tag ${genreClass}">${genre}</span>` : ''}
             <div class="meal-header" style="display:flex; justify-content:space-between; align-items:center;">
                 <h4 class="meal-name" style="margin:0;">${name} ${favoriteIcon}</h4>
-                <button class="delete-btn" onclick="deleteMeal(${index})" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
+                <div style="display:flex; gap:5px;">
+                    <button class="edit-btn" onclick="editMeal(${index})" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
+                    <button class="delete-btn" onclick="deleteMeal(${index})" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
+                </div>
             </div>
             <div class="meal-details">
                 <p class="main-ingredient"><strong>メイン食材:</strong> ${ingredient}</p>
@@ -146,6 +150,40 @@ function deleteMeal(index) {
         // 再表示
         displayMeals(allMeals);
     }
+}
+
+// 新しく追加：編集を実行する関数
+function editMeal(index) {
+    const meal = allMeals[index];
+    
+    // フォームに値をセット
+    document.getElementById('mealName').value = meal.料理名 || '';
+    document.getElementById('mainIngredient').value = meal.メイン食材 || '';
+    
+    // カテゴリーボタンの選択状態をリセットし、該当するものをアクティブに
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.category === meal.カテゴリー) {
+            btn.classList.add('active');
+        }
+    });
+    selectedCategory = meal.カテゴリー || '';
+    
+    // ジャンルボタンの選択状態をリセットし、該当するものをアクティブに
+    document.querySelectorAll('.genre-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.genre === meal.ジャンル) {
+            btn.classList.add('active');
+        }
+    });
+    selectedGenre = meal.ジャンル || '';
+    
+    document.getElementById('memo').value = meal.メモ || '';
+    document.getElementById('lastAte').value = meal['最後に食べた日'] || '';
+    document.getElementById('favorite').checked = meal.お気に入り === 'はい';
+    
+    // 編集モードに設定
+    editingIndex = index;
 }
 
 // ==========================================
@@ -240,10 +278,14 @@ function saveMeal() {
         "お気に入り": favorite ? "はい" : "いいえ"
     };
 
-    allMeals.push(data);
+    if (editingIndex !== null) {
+        allMeals[editingIndex] = data;
+    } else {
+        allMeals.push(data);
+    }
     localStorage.setItem('meals', JSON.stringify(allMeals));
 
-    alert("保存しました！");
+    alert(editingIndex !== null ? "修正しました！" : "保存しました！");
 
     // フォームをリセット
     document.getElementById('mealName').value = '';
@@ -255,6 +297,7 @@ function saveMeal() {
     selectedCategory = '';
     document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
     selectedGenre = '';
+    editingIndex = null;
     
     // リスト更新
     loadMeals();
