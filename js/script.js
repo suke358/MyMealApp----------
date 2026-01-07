@@ -1,7 +1,7 @@
 // ==========================================
 // 1. 基本設定（ここを自分のURLに書き換える）
 // ==========================================
-const SCRIPT_URL = "ここにデプロイしたURLを貼り付ける";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxAspX9Pd6s8vUUA_6s1fXDetYR76yRDKCucSu6CdBYyp76N5CItLFN7bZ9s7VXFpvUw/exec";
 
 // ==========================================
 // 2. データの読み込み処理
