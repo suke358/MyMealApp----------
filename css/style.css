@@ -725,10 +725,15 @@ textarea {
     font-weight: 600;
     color: white;
     background: #667eea;
+}
+
+.tag-container {
     position: absolute;
-    top: 35px;
+    top: 10px;
     left: 10px;
-    margin-right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .genre-tag {
@@ -738,9 +743,6 @@ textarea {
     font-size: 10px;
     font-weight: 600;
     color: white;
-    position: absolute;
-    top: 10px;
-    left: 10px;
 }
 
 .genre-tag.japanese {

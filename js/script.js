@@ -121,7 +121,10 @@ function displayMeals(meals) {
         const genreClass = genre === '和食' ? 'japanese' : genre === '洋食' ? 'western' : genre === '中華' ? 'chinese' : 'other';
 
         item.innerHTML = `
-            ${genre ? `<span class="genre-tag ${genreClass}">${genre}</span>` : ''}
+            <div class="tag-container">
+                ${genre ? `<span class="genre-tag ${genreClass}">${genre}</span>` : ''}
+                <span class="category-tag">${category}</span>
+            </div>
             <div class="meal-header" style="display:flex; justify-content:space-between; align-items:center;">
                 <h4 class="meal-name" style="margin:0;">${name} ${favoriteIcon}</h4>
                 <div>
