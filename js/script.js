@@ -137,7 +137,6 @@ function displayMeals(meals) {
                 ${memo ? `<p class="memo">${memo}</p>` : ''}
                 ${lastAteText ? `<p class="last-ate">${lastAteText}</p>` : ''}
             </div>
-            <span class="category-tag">${category}</span>
         `;
         mealList.appendChild(item);
     });
