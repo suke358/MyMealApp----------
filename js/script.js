@@ -124,7 +124,7 @@ function displayMeals(meals) {
             ${genre ? `<span class="genre-tag ${genreClass}">${genre}</span>` : ''}
             <div class="meal-header" style="display:flex; justify-content:space-between; align-items:center;">
                 <h4 class="meal-name" style="margin:0;">${name} ${favoriteIcon}</h4>
-                <div style="display:flex; gap:5px;">
+                <div class="meal-actions">
                     <button class="edit-btn" onclick="editMeal(${index})" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
                     <button class="delete-btn" onclick="deleteMeal(${index})" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
                 </div>

@@ -559,6 +559,11 @@ textarea {
     opacity: 0.7;
 }
 
+.meal-actions {
+    display: flex;
+    gap: 10px;
+}
+
 .empty-state {
     text-align: center;
     padding: 40px 20px;
