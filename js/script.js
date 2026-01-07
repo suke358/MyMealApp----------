@@ -59,3 +59,40 @@ async function saveMeal() {
         alert("保存に失敗しちゃった...");
     }
 }
+
+// スマホからスプレッドシートへ保存する魔法のコード
+async function saveMeal() {
+    const name = document.getElementById('mealName').value;
+    const ingredient = document.getElementById('mealIngredient').value;
+    const category = document.getElementById('mealCategory').value;
+
+    if (!name) {
+        alert("料理名を入れてね！");
+        return;
+    }
+
+    const data = {
+        id: Date.now(), // IDを追加
+        category: category,
+        name: name,
+        ingredients: ingredient,
+        memo: "",
+        rating: 5,
+        lastEaten: new Date().toLocaleDateString()
+    };
+
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        alert("スプレッドシートに保存したよ！");
+        // 入力欄を空にする
+        document.getElementById('mealName').value = '';
+        document.getElementById('mealIngredient').value = '';
+        loadMeals(); // 一覧を再読み込みして最新にする
+    } catch (error) {
+        console.error('Save error:', error);
+        alert("保存に失敗しちゃった...");
+    }
+}
