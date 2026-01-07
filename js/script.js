@@ -64,13 +64,12 @@ function filterList(category) {
 });
 
 // ==========================================
+// ==========================================
 // 4. データの読み込み処理
 // ==========================================
 function loadMeals() {
     const mealList = document.getElementById('mealsList');
     if (!mealList) return;
-
-    mealList.innerHTML = '<p class="loading">データを読み込み中...</p>';
 
     // localStorage から読み込み
     allMeals = JSON.parse(localStorage.getItem('meals')) || [];
@@ -82,6 +81,7 @@ function loadMeals() {
 // ==========================================
 function displayMeals(meals) {
     const mealList = document.getElementById('mealsList');
+    if (!mealList) return;
     mealList.innerHTML = '';
 
     if (!meals || meals.length === 0) {
@@ -92,24 +92,47 @@ function displayMeals(meals) {
     meals.forEach((meal, index) => {
         const item = document.createElement('div');
         item.className = 'meal-item';
-        item.setAttribute('data-category', meal.カテゴリー || 'その他');
-        const favoriteIcon = meal.お気に入り === 'はい' ? '⭐' : '';
-        const lastAteText = meal['最後に食べた日'] ? `<small>最後に食べた日: ${meal['最後に食べた日']}</small>` : '';
+        
+        // カテゴリーの絞り込み用に属性をセット
+        const category = meal.カテゴリー || meal.category || 'その他';
+        item.setAttribute('data-category', category);
+
+        // お気に入りや日付の表示判定
+        const favoriteIcon = (meal.お気に入り === 'はい' || meal.favorite) ? '⭐' : '';
+        const lastAteValue = meal['最後に食べた日'] || meal.lastAte;
+        const lastAteText = lastAteValue ? `<small>最後に食べた日: ${lastAteValue}</small>` : '';
+        
+        // 料理名などのキー名がズレていても表示されるように調整
+        const name = meal.料理名 || meal.name || '名前なし';
+        const ingredient = meal.メイン食材 || meal.mainIngredient || '-';
+        const memo = meal.メモ || meal.memo || '';
+
         item.innerHTML = `
-            <div class="meal-header">
-                <h4 class="meal-name">${meal.料理名 || '名前なし'}</h4>
-                <span class="favorite-icon">${favoriteIcon}</span>
-                <button class="delete-btn" onclick="deleteMeal(${index})">🗑️</button>
+            <div class="meal-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h4 class="meal-name" style="margin:0;">${name} ${favoriteIcon}</h4>
+                <button class="delete-btn" onclick="deleteMeal(${index})" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
             </div>
             <div class="meal-details">
-                <p class="main-ingredient"><strong>メイン食材:</strong> ${meal.メイン食材 || '-'}</p>
-                ${meal.メモ ? `<p class="memo">${meal.メモ}</p>` : ''}
+                <p class="main-ingredient"><strong>メイン食材:</strong> ${ingredient}</p>
+                ${memo ? `<p class="memo">${memo}</p>` : ''}
                 ${lastAteText ? `<p class="last-ate">${lastAteText}</p>` : ''}
             </div>
-            <span class="category-tag">${meal.カテゴリー || '未分類'}</span>
+            <span class="category-tag">${category}</span>
         `;
         mealList.appendChild(item);
     });
+}
+
+// 新しく追加：個別削除を実行する関数
+function deleteMeal(index) {
+    if (confirm("このメニューを削除してもよろしいですか？")) {
+        // 全データ（allMeals）から1つ削除
+        allMeals.splice(index, 1);
+        // 保存し直し
+        localStorage.setItem('meals', JSON.stringify(allMeals));
+        // 再表示
+        displayMeals(allMeals);
+    }
 }
 
 // ==========================================
