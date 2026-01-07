@@ -221,7 +221,7 @@ textarea {
 .export-btn, .import-btn {
     flex: 1;
     padding: 15px;
-    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
     color: white;
     border: none;
     border-radius: 12px;
@@ -229,7 +229,7 @@ textarea {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 3px 10px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 3px 10px rgba(127, 140, 141, 0.3);
 }
 
 .export-btn:active, .import-btn:active {
