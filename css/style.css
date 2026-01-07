@@ -560,8 +560,25 @@ textarea {
 }
 
 .meal-actions {
+    position: relative;
+}
+
+.edit-btn, .delete-btn {
+    position: absolute;
+    top: 15px;
+    width: 30px;
+    height: 30px;
     display: flex;
-    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-btn {
+    right: 50px;
+}
+
+.delete-btn {
+    right: 15px;
 }
 
 .empty-state {
