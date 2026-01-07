@@ -66,21 +66,15 @@ function filterList(category) {
 // ==========================================
 // 4. データの読み込み処理
 // ==========================================
-async function loadMeals() {
+function loadMeals() {
     const mealList = document.getElementById('mealsList');
     if (!mealList) return;
 
     mealList.innerHTML = '<p class="loading">データを読み込み中...</p>';
 
-    try {
-        const response = await fetch(SCRIPT_URL);
-        const meals = await response.json();
-        allMeals = meals || [];
-        displayMeals(allMeals);
-    } catch (error) {
-        console.error('Error:', error);
-        mealList.innerHTML = '<p class="error">読み込みに失敗しました。</p>';
-    }
+    // localStorage から読み込み
+    allMeals = JSON.parse(localStorage.getItem('meals')) || [];
+    displayMeals(allMeals);
 }
 
 // ==========================================
@@ -95,7 +89,7 @@ function displayMeals(meals) {
         return;
     }
 
-    meals.forEach(meal => {
+    meals.forEach((meal, index) => {
         const item = document.createElement('div');
         item.className = 'meal-item';
         item.setAttribute('data-category', meal.カテゴリー || 'その他');
@@ -105,6 +99,7 @@ function displayMeals(meals) {
             <div class="meal-header">
                 <h4 class="meal-name">${meal.料理名 || '名前なし'}</h4>
                 <span class="favorite-icon">${favoriteIcon}</span>
+                <button class="delete-btn" onclick="deleteMeal(${index})">🗑️</button>
             </div>
             <div class="meal-details">
                 <p class="main-ingredient"><strong>メイン食材:</strong> ${meal.メイン食材 || '-'}</p>
@@ -174,9 +169,9 @@ function suggestMeal() {
 }
 
 // ==========================================
-// 8. スプレッドシートへの保存処理（最新のfetch仕様に修正）
+// 8. 保存処理
 // ==========================================
-async function saveMeal() {
+function saveMeal() {
     const name = document.getElementById('mealName').value.trim();
     const mainIngredient = document.getElementById('mainIngredient').value.trim();
     const memo = document.getElementById('memo').value.trim();
@@ -202,59 +197,42 @@ async function saveMeal() {
         "お気に入り": favorite ? "はい" : "いいえ"
     };
 
-    try {
-        // --- ここから差し替え ---//
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors', // これがセキュリティエラーを防ぐ重要ポイント！
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
+    allMeals.push(data);
+    localStorage.setItem('meals', JSON.stringify(allMeals));
 
-        // no-corsモードは「成功したか」がブラウザで判定できないため、
-        // 実行されたら「保存しました」とみなして進むのが一番スムーズです
-        alert("送信しました！スプレッドシートを確認してください");
+    alert("保存しました！");
 
-        // フォームをリセット
-        document.getElementById('mealName').value = '';
-        document.getElementById('mainIngredient').value = '';
-        document.getElementById('memo').value = '';
-        document.getElementById('lastAte').value = '';
-        document.getElementById('favorite').checked = false;
-        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-        selectedCategory = '';
-        
-        // リスト更新（エラーが出る場合は一旦コメントアウトしてもOK）
-        if (typeof loadMeals === 'function') loadMeals(); 
-        // --- ここまで差し替え ---
-
-    } catch (error) {
-                console.error('Save error:', error);
-        alert("保存に失敗しました。");
-    }
+    // フォームをリセット
+    document.getElementById('mealName').value = '';
+    document.getElementById('mainIngredient').value = '';
+    document.getElementById('memo').value = '';
+    document.getElementById('lastAte').value = '';
+    document.getElementById('favorite').checked = false;
+    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+    selectedCategory = '';
+    
+    // リスト更新
+    loadMeals();
 }
 
 // ==========================================
 // 9. 全削除処理
 // ==========================================
-async function clearAllMeals() {
+function clearAllMeals() {
     if (!confirm('本当に全てのデータを削除しますか？')) return;
 
-    try {
-        const response = await fetch(SCRIPT_URL + '?action=clear', {
-            method: 'POST'
-        });
+    localStorage.removeItem('meals');
+    allMeals = [];
+    loadMeals();
+}
 
-        if (response.ok) {
-            alert('全てのデータを削除しました。');
-            loadMeals();
-        } else {
-            alert('削除に失敗しました。');
-        }
-    } catch (error) {
-        console.error('Clear error:', error);
-        alert('削除に失敗しました。');
-    }
+// ==========================================
+// 10. 削除処理
+// ==========================================
+function deleteMeal(index) {
+    if (!confirm('このおかずを削除しますか？')) return;
+
+    allMeals.splice(index, 1);
+    localStorage.setItem('meals', JSON.stringify(allMeals));
+    loadMeals();
 }
