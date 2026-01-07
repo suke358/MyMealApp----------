@@ -1,8 +1,7 @@
 // ==========================================
 // 1. 基本設定（最新のURLに差し替え済み）
 // ==========================================
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxy6GcwtOIfHJFwDEVpi3Q-bahGQOZVYC2kR5JTgrlLNpEKUB_d2MIQjXcksGOJFjVIpg/exec";
-
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzS6EsnM7soDU7xW2yhtsy8xohEPfYLzWAExVGAikC5k5EH3YIdt3bXaD8tcrn5JiY7-Q/exec";
 // ==========================================
 // 2. データの読み込み処理
 // ==========================================
