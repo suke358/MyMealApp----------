@@ -725,6 +725,9 @@ textarea {
     font-weight: 600;
     color: white;
     background: #667eea;
+    position: absolute;
+    top: 35px;
+    left: 10px;
     margin-right: 8px;
 }
 
@@ -754,4 +757,13 @@ textarea {
 
 .genre-tag.other {
     background: #d1b3d9;
+}
+
+.edit-btn, .delete-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 5px;
 }
