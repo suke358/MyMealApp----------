@@ -72,6 +72,11 @@ function filterList(category) {
 
     // データ読み込み
     loadMeals();
+
+    // エクスポート・インポート
+    document.getElementById('exportBtn').addEventListener('click', exportData);
+    document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+    document.getElementById('importFile').addEventListener('change', importData);
 });
 
 // ==========================================
@@ -392,4 +397,41 @@ function deleteMeal(index) {
     allMeals.splice(index, 1);
     localStorage.setItem('meals', JSON.stringify(allMeals));
     loadMeals();
+}
+
+// ==========================================
+// 11. データエクスポート
+// ==========================================
+function exportData() {
+    const dataStr = JSON.stringify(allMeals, null, 2);
+    const blob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'meals.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ==========================================
+// 12. データインポート
+// ==========================================
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedMeals = JSON.parse(e.target.result);
+            if (confirm('現在のデータを上書きしますか？')) {
+                allMeals = importedMeals;
+                localStorage.setItem('meals', JSON.stringify(allMeals));
+                loadMeals();
+                alert('データを読み込みました。');
+            }
+        } catch (error) {
+            alert('ファイルの形式が正しくありません。');
+        }
+    };
+    reader.readAsText(file);
 }
