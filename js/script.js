@@ -269,69 +269,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 保存処理
     // ==========================================
-    async function saveMeal() {
-        const name = document.getElementById('mealName').value.trim();
-        const mainIngredient = document.getElementById('mainIngredient').value.trim();
-        const memo = document.getElementById('memo').value.trim();
-        const lastAte = document.getElementById('lastAte').value;
-        const favorite = document.getElementById('favorite').checked;
-
-        if (!name) {
-            alert("食事名を入力してください！");
-            return;
-        }
-
-        // 新規登録の場合のみ重複チェック
-        if (editingIndex === null) {
-            const normalizedName = name.toLowerCase().trim();
-            const isDuplicate = allMeals.some(meal => meal.料理名 && meal.料理名.toLowerCase().trim() === normalizedName);
-            if (isDuplicate) {
-                const confirmAdd = confirm(`『${name}』はすでに登録されています。このまま追加しますか？`);
-                if (!confirmAdd) return;
+// --- 修正ポイント：保存・更新の処理を確実に完了させる ---
+        try {
+            if (editingIndex !== null) {
+                // 更新処理
+                const { error } = await supabaseClient
+                    .from('meals')
+                    .update({ name: JSON.stringify(data) })
+                    .eq('id', allMeals[editingIndex].id);
+                
+                if (error) throw error;
+                alert("修正しました！");
+            } else {
+                // 新規保存
+                const { data: insertData, error } = await supabaseClient
+                    .from('meals')
+                    .insert({ name: JSON.stringify(data) })
+                    .select();
+                
+                if (error) throw error;
+                alert("保存しました！");
             }
-        }
 
-        if (!selectedCategory) {
-            alert("カテゴリーを選択してください！");
-            return;
-        }
+            // 保存成功後にデータを再取得して表示を更新（これが一番確実です）
+            fetchMeals(); 
 
-        if (!selectedGenre) {
-            alert("ジャンルを選択してください！");
-            return;
-        }
+            // フォームのリセット（既存のコードのままでOK）
+            resetForm(); 
 
-        const data = {
-            "料理名": name,
-            "メイン食材": mainIngredient,
-            "カテゴリー": selectedCategory,
-            "ジャンル": selectedGenre,
-            "メモ": memo,
-            "最後に食べた日": lastAte,
-            "お気に入り": favorite ? "はい" : "いいえ"
-        };
+        } catch (err) {
+            console.error('エラー発生:', err.message);
+            alert('エラーが発生しました: ' + err.message);
+        
+    }
 
-        if (editingIndex !== null) {
-            const { error } = await supabaseClient.from('meals').update({ name: JSON.stringify(data) }).eq('id', allMeals[editingIndex].id);
-            if (error) {
-                alert('更新に失敗しました: ' + error.message);
-                return;
-            }
-            allMeals[editingIndex] = { id: allMeals[editingIndex].id, ...data };
-            alert("修正しました！");
-        } else {
-            const { data: insertData, error } = await supabaseClient.from('meals').insert({ name: JSON.stringify(data) }).select();
-            if (error) {
-                alert('保存に失敗しました: ' + error.message);
-                return;
-            }
-            allMeals.push({ id: insertData[0].id, ...data });
-            alert("保存しました！");
-        }
-
-        displayMeals(allMeals);
-
-        // フォームをリセット
+    // フォームリセットを関数にまとめるとスッキリします
+    function resetForm() {
         document.getElementById('mealName').value = '';
         document.getElementById('mainIngredient').value = '';
         document.getElementById('memo').value = '';
@@ -343,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedGenre = '';
         editingIndex = null;
     }
-
+    
     // ==========================================
     // 削除処理
     // ==========================================
