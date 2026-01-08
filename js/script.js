@@ -1,9 +1,12 @@
 // ==========================================
-// 1. 基本設定（最新のURLに差し替え済み）
+// Supabase 設定
 // ==========================================
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzS6EsnM7soDU7xW2yhtsy8xohEPfYLzWAExVGAikC5k5EH3YIdt3bXaD8tcrn5JiY7-Q/exec";
+const supabaseUrl = 'https://jkgpemdagmysnnvucnym.supabase.co';
+const supabaseKey = 'sb_publishable_WTEMEoxDW1IH0V40osFPJQ_DN9D_vFt';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
+
 // 2. グローバル変数
 // ==========================================
 let selectedCategory = '';
@@ -67,79 +70,23 @@ function filterList(category) {
     // おすすめボタン
     document.getElementById('suggestBtn').addEventListener('click', suggestMeal);
 
-    // データ読み込み
-    loadMeals();
-
-    // エクスポート・インポート
-    document.getElementById('exportBtn').addEventListener('click', exportData);
-    document.getElementById('importFile').addEventListener('change', importData);
+    // データ取得
+    fetchMeals();
 });
 
 // ==========================================
 // ==========================================
-// 4. データの読み込み処理
+// データ取得
 // ==========================================
-function loadMeals() {
-    const mealList = document.getElementById('mealsList');
-    if (!mealList) return;
-
-    // localStorage から読み込み
-    allMeals = JSON.parse(localStorage.getItem('meals')) || [];
-    
-    // 初期データがない場合のみ追加
-    if (allMeals.length === 0) {
-        initDefaultMeals();
+async function fetchMeals() {
+    const { data, error } = await supabase.from('meals').select('*');
+    if (error) {
+        alert('データの読み込みに失敗しました: ' + error.message);
+        return;
     }
-    
+    allMeals = data.map(item => ({ id: item.id, ...JSON.parse(item.name) }));
     displayMeals(allMeals);
-}
-
-// ==========================================
-// 初期データの設定
-// ==========================================
-function initDefaultMeals() {
-    const defaultMeals = [
-        // 和食 (8個)
-        {"料理名": "生姜焼き", "メイン食材": "豚肉", "カテゴリー": "豚", "ジャンル": "和食", "メモ": "玉ねぎと一緒に炒める", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "鮭の塩焼き", "メイン食材": "鮭", "カテゴリー": "海鮮", "ジャンル": "和食", "メモ": "皮がパリッとなるように焼く", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "肉じゃが", "メイン食材": "牛肉", "カテゴリー": "牛", "ジャンル": "和食", "メモ": "じゃがいもと玉ねぎを入れる", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "味噌汁", "メイン食材": "豆腐", "カテゴリー": "野菜", "ジャンル": "和食", "メモ": "わかめを加えると良い", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "鶏の照り焼き", "メイン食材": "鶏むね肉", "カテゴリー": "鶏", "ジャンル": "和食", "メモ": "醤油とみりんで味付け", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "豚汁", "メイン食材": "豚肉", "カテゴリー": "豚", "ジャンル": "和食", "メモ": "ごぼうと人参を入れる", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "納豆ご飯", "メイン食材": "納豆", "カテゴリー": "その他", "ジャンル": "和食", "メモ": "薬味をたっぷり", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "野菜炒め", "メイン食材": "キャベツ", "カテゴリー": "野菜", "ジャンル": "和食", "メモ": "にんじんとピーマンも", "最後に食べた日": "", "お気に入り": "はい"},
-        
-        // 洋食 (7個)
-        {"料理名": "ハンバーグ", "メイン食材": "牛肉", "カテゴリー": "牛", "ジャンル": "洋食", "メモ": "玉ねぎをみじん切りに", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "魚のムニエル", "メイン食材": "白身魚", "カテゴリー": "海鮮", "ジャンル": "洋食", "メモ": "バターで焼く", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "オムライス", "メイン食材": "鶏肉", "カテゴリー": "鶏", "ジャンル": "洋食", "メモ": "ケチャップライスを包む", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "ビーフシチュー", "メイン食材": "牛肉", "カテゴリー": "牛", "ジャンル": "洋食", "メモ": "赤ワインで煮込む", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "ポークチャップ", "メイン食材": "豚肉", "カテゴリー": "豚", "ジャンル": "洋食", "メモ": "パン粉を付けて揚げる", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "野菜グラタン", "メイン食材": "ブロッコリ", "カテゴリー": "野菜", "ジャンル": "洋食", "メモ": "チーズをたっぷり", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "スパゲッティボロネーゼ", "メイン食材": "牛肉", "カテゴリー": "牛", "ジャンル": "洋食", "メモ": "トマトソース", "最後に食べた日": "", "お気に入り": "はい"},
-        
-        // 中華 (8個)
-        {"料理名": "回鍋肉", "メイン食材": "豚肉", "カテゴリー": "豚", "ジャンル": "中華", "メモ": "キャベツと一緒に炒める", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "チンジャオロース", "メイン食材": "豚肉", "カテゴリー": "豚", "ジャンル": "中華", "メモ": "ピーマンと玉ねぎ", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "八宝菜", "メイン食材": "野菜ミックス", "カテゴリー": "野菜", "ジャンル": "中華", "メモ": "色々な野菜を入れる", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "酢豚", "メイン食材": "豚肉", "カテゴリー": "豚", "ジャンル": "中華", "メモ": "甘酢あん", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "魚香茄子", "メイン食材": "茄子", "カテゴリー": "野菜", "ジャンル": "中華", "メモ": "ひき肉を入れる", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "春巻き", "メイン食材": "野菜", "カテゴリー": "野菜", "ジャンル": "中華", "メモ": "皮に包んで揚げる", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "担々麺", "メイン食材": "豚肉", "カテゴリー": "豚", "ジャンル": "中華", "メモ": "胡麻ペースト", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "エビチリ", "メイン食材": "エビ", "カテゴリー": "海鮮", "ジャンル": "中華", "メモ": "唐辛子で辛く", "最後に食べた日": "", "お気に入り": "いいえ"},
-        
-        // その他 (7個)
-        {"料理名": "うどん", "メイン食材": "うどん", "カテゴリー": "その他", "ジャンル": "麺類", "メモ": "出汁で煮る", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "パスタ", "メイン食材": "パスタ", "カテゴリー": "その他", "ジャンル": "麺類", "メモ": "オリーブオイルとニンニク", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "カレー", "メイン食材": "鶏肉", "カテゴリー": "鶏", "ジャンル": "その他", "メモ": "スパイスを効かせる", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "サンドイッチ", "メイン食材": "ハム", "カテゴリー": "豚", "ジャンル": "その他", "メモ": "野菜を挟む", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "サラダ", "メイン食材": "レタス", "カテゴリー": "野菜", "ジャンル": "その他", "メモ": "ドレッシングをかける", "最後に食べた日": "", "お気に入り": "はい"},
-        {"料理名": "オートミール", "メイン食材": "オートミール", "カテゴリー": "その他", "ジャンル": "麺類", "メモ": "牛乳で煮る", "最後に食べた日": "", "お気に入り": "いいえ"},
-        {"料理名": "焼きそば", "メイン食材": "豚肉", "カテゴリー": "豚", "ジャンル": "麺類", "メモ": "ソースで味付け", "最後に食べた日": "", "お気に入り": "はい"}
-    ];
-    
-    allMeals.push(...defaultMeals);
-    localStorage.setItem('meals', JSON.stringify(allMeals));
+    alert('データを読み込みました！');
 }
 
 // ==========================================
@@ -306,7 +253,7 @@ function suggestMeal() {
 // ==========================================
 // 8. 保存処理
 // ==========================================
-function saveMeal() {
+async function saveMeal() {
     const name = document.getElementById('mealName').value.trim();
     const mainIngredient = document.getElementById('mainIngredient').value.trim();
     const memo = document.getElementById('memo').value.trim();
@@ -349,13 +296,24 @@ function saveMeal() {
     };
 
     if (editingIndex !== null) {
-        allMeals[editingIndex] = data;
+        const { error } = await supabase.from('meals').update({ name: JSON.stringify(data) }).eq('id', allMeals[editingIndex].id);
+        if (error) {
+            alert('更新に失敗しました: ' + error.message);
+            return;
+        }
+        allMeals[editingIndex] = { id: allMeals[editingIndex].id, ...data };
+        alert("修正しました！");
     } else {
-        allMeals.push(data);
+        const { data: insertData, error } = await supabase.from('meals').insert({ name: JSON.stringify(data) }).select();
+        if (error) {
+            alert('保存に失敗しました: ' + error.message);
+            return;
+        }
+        allMeals.push({ id: insertData[0].id, ...data });
+        alert("保存しました！");
     }
-    localStorage.setItem('meals', JSON.stringify(allMeals));
 
-    alert(editingIndex !== null ? "修正しました！" : "保存しました！");
+    displayMeals(allMeals);
 
     // フォームをリセット
     document.getElementById('mealName').value = '';
@@ -373,69 +331,20 @@ function saveMeal() {
     loadMeals();
 }
 
-// ==========================================
-// 9. 全削除処理
-// ==========================================
-function clearAllMeals() {
-    if (!confirm('本当に全てのデータを削除しますか？')) return;
 
-    localStorage.removeItem('meals');
-    allMeals = [];
-    loadMeals();
-}
-
-// ==========================================
 // 10. 削除処理
 // ==========================================
-function deleteMeal(index) {
+async function deleteMeal(index) {
     if (!confirm('このおかずを削除しますか？')) return;
 
+    const { error } = await supabase.from('meals').delete().eq('id', allMeals[index].id);
+    if (error) {
+        alert('削除に失敗しました: ' + error.message);
+        return;
+    }
+
     allMeals.splice(index, 1);
-    localStorage.setItem('meals', JSON.stringify(allMeals));
-    loadMeals();
+    displayMeals(allMeals);
+    alert('削除しました！');
 }
 
-// ==========================================
-// 11. データエクスポート
-// ==========================================
-function exportData() {
-    const dataStr = JSON.stringify(allMeals, null, 2);
-    const blob = new Blob([dataStr], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'meals.json';
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-// ==========================================
-// 12. データインポート
-// ==========================================
-function importData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const content = e.target.result;
-        if (!content || content.trim() === '') {
-            alert('ファイルが空です。');
-            return;
-        }
-        try {
-            const importedMeals = JSON.parse(content);
-            if (confirm('現在のデータを上書きしますか？')) {
-                allMeals = importedMeals;
-                localStorage.setItem('allMeals', JSON.stringify(allMeals));
-                alert("データを読み込みました！");
-                location.reload();
-            }
-        } catch (error) {
-            alert('ファイルの形式がJSONではありません。エラー: ' + error.message);
-        }
-    };
-    reader.onerror = function() {
-        alert('ファイルの読み込みに失敗しました。ファイルが正しく選択されているか確認してください。');
-    };
-    reader.readAsText(file);
-}

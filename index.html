@@ -7,6 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>MyMeal おかず提案ツール</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="container">
@@ -62,11 +63,6 @@
             </div>
             
             <button class="save-btn" id="saveBtn">保存</button>
-            
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="export-btn" id="exportBtn">💾 データを保存（書き出し）</button>
-                <input type="file" id="importFile" accept=".json" class="import-btn">
-            </div>
         </div>
         
 <div class="meals-section">
