@@ -3,7 +3,7 @@
 // ==========================================
 const supabaseUrl = 'https://jkgpemdagmysnnvucnym.supabase.co';
 const supabaseKey = 'sb_publishable_WTEMEoxDW1IH0V40osFPJQ_DN9D_vFt';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
 
@@ -79,7 +79,7 @@ function filterList(category) {
 // データ取得
 // ==========================================
 async function fetchMeals() {
-    const { data, error } = await supabase.from('meals').select('*');
+    const { data, error } = await supabaseClient.from('meals').select('*');
     if (error) {
         alert('データの読み込みに失敗しました: ' + error.message);
         return;
@@ -142,21 +142,6 @@ function displayMeals(meals) {
         `;
         mealList.appendChild(item);
     });
-}
-
-// 新しく追加：個別削除を実行する関数
-async function deleteMeal(index) {
-    if (!confirm('このおかずを削除しますか？')) return;
-
-    const { error } = await supabase.from('meals').delete().eq('id', allMeals[index].id);
-    if (error) {
-        alert('削除に失敗しました: ' + error.message);
-        return;
-    }
-
-    allMeals.splice(index, 1);
-    displayMeals(allMeals);
-    alert('削除しました！');
 }
 
 // 新しく追加：編集を実行する関数
@@ -303,7 +288,7 @@ async function saveMeal() {
     };
 
     if (editingIndex !== null) {
-        const { error } = await supabase.from('meals').update({ name: JSON.stringify(data) }).eq('id', allMeals[editingIndex].id);
+        const { error } = await supabaseClient.from('meals').update({ name: JSON.stringify(data) }).eq('id', allMeals[editingIndex].id);
         if (error) {
             alert('更新に失敗しました: ' + error.message);
             return;
@@ -311,7 +296,7 @@ async function saveMeal() {
         allMeals[editingIndex] = { id: allMeals[editingIndex].id, ...data };
         alert("修正しました！");
     } else {
-        const { data: insertData, error } = await supabase.from('meals').insert({ name: JSON.stringify(data) }).select();
+        const { data: insertData, error } = await supabaseClient.from('meals').insert({ name: JSON.stringify(data) }).select();
         if (error) {
             alert('保存に失敗しました: ' + error.message);
             return;
