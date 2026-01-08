@@ -74,19 +74,33 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchMeals();
 
     // ==========================================
-    // データ取得
+// データ取得
     // ==========================================
     async function fetchMeals() {
         const { data, error } = await supabaseClient.from('meals').select('*');
+        
         if (error) {
             alert('データの読み込みに失敗しました: ' + error.message);
             return;
         }
-        allMeals = data.map(item => ({ id: item.id, ...JSON.parse(item.name) }));
-        displayMeals(allMeals);
-        alert('データを読み込みました！');
-    }
 
+        // データの変換（もしSupabaseにそのまま保存しているならシンプルになります）
+        allMeals = data.map(item => {
+            // もしnameカラムにJSON文字列が入っている場合はそのまま、
+            // そうでない場合は項目の組み合わせを作ります
+            try {
+                return { id: item.id, ...JSON.parse(item.name) };
+            } catch (e) {
+                return { id: item.id, name: item.name }; // JSONじゃない場合
+            }
+        });
+
+        displayMeals(allMeals);
+
+        // ✅ ここをコメントアウト（// をつける）すれば、立ち上げ時のアラートが消えます！
+        // alert('データを読み込みました！'); 
+    }
+    
     // ==========================================
     // 画面への表示処理
     // ==========================================
