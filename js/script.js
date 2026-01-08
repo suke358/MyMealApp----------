@@ -71,11 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('suggestBtn').addEventListener('click', suggestMeal);
 
     // データ取得
-    fetchMeals();
-
-    // ==========================================
-// データ取得
-    // ==========================================
     async function fetchMeals() {
         const { data, error } = await supabaseClient.from('meals').select('*');
         
@@ -100,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ✅ ここをコメントアウト（// をつける）すれば、立ち上げ時のアラートが消えます！
         // alert('データを読み込みました！'); 
     }
-    
+
     // ==========================================
     // 画面への表示処理
     // ==========================================
