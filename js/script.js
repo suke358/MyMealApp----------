@@ -36,7 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 保存ボタンのイベントリスナー
-    document.getElementById('saveBtn').addEventListener('click', saveMeal);
+    const saveBtn = document.getElementById('saveBtn');
+    // スマホの「タップ」とPCの「クリック」両方で反応するようにします
+    saveBtn.onclick = (e) => {
+    console.log("保存ボタンが押されました");
+    saveMeal();
+};
 
     // 検索機能
     document.getElementById('searchInput').addEventListener('input', filterMeals);
