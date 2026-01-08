@@ -145,15 +145,18 @@ function displayMeals(meals) {
 }
 
 // 新しく追加：個別削除を実行する関数
-function deleteMeal(index) {
-    if (confirm("このメニューを削除してもよろしいですか？")) {
-        // 全データ（allMeals）から1つ削除
-        allMeals.splice(index, 1);
-        // 保存し直し
-        localStorage.setItem('meals', JSON.stringify(allMeals));
-        // 再表示
-        displayMeals(allMeals);
+async function deleteMeal(index) {
+    if (!confirm('このおかずを削除しますか？')) return;
+
+    const { error } = await supabase.from('meals').delete().eq('id', allMeals[index].id);
+    if (error) {
+        alert('削除に失敗しました: ' + error.message);
+        return;
     }
+
+    allMeals.splice(index, 1);
+    displayMeals(allMeals);
+    alert('削除しました！');
 }
 
 // 新しく追加：編集を実行する関数
@@ -208,7 +211,9 @@ function filterMeals() {
             (meal.ジャンル && meal.ジャンル.toLowerCase().includes(searchTerm));
 
         const matchesFilter = activeFilter === 'all' ||
-            (activeFilter === '肉' && ['牛', '豚', '鶏'].includes(meal.カテゴリー)) ||
+            (activeFilter === '牛' && meal.カテゴリー === '牛') ||
+            (activeFilter === '豚' && meal.カテゴリー === '豚') ||
+            (activeFilter === '鶏' && meal.カテゴリー === '鶏') ||
             (activeFilter === '魚' && meal.カテゴリー === '海鮮') ||
             (activeFilter === '野菜' && meal.カテゴリー === '野菜') ||
             (activeFilter === 'その他' && meal.カテゴリー === 'その他');
@@ -228,7 +233,9 @@ function suggestMeal() {
 
     if (activeFilter !== 'all') {
         candidates = allMeals.filter(meal => {
-            return (activeFilter === '肉' && ['牛', '豚', '鶏'].includes(meal.カテゴリー)) ||
+            return (activeFilter === '牛' && meal.カテゴリー === '牛') ||
+                   (activeFilter === '豚' && meal.カテゴリー === '豚') ||
+                   (activeFilter === '鶏' && meal.カテゴリー === '鶏') ||
                    (activeFilter === '魚' && meal.カテゴリー === '海鮮') ||
                    (activeFilter === '野菜' && meal.カテゴリー === '野菜') ||
                    (activeFilter === 'その他' && meal.カテゴリー === 'その他');
@@ -326,9 +333,6 @@ async function saveMeal() {
     document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
     selectedGenre = '';
     editingIndex = null;
-    
-    // リスト更新
-    loadMeals();
 }
 
 
