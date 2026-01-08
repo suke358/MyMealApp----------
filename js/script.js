@@ -360,4 +360,3 @@ document.addEventListener('DOMContentLoaded', () => {
         displayMeals(allMeals);
         alert('削除しました！');
     }
-});
