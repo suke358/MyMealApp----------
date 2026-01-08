@@ -6,9 +6,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>MyMeal おかず提案ツール</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
+
+
+
 <body>
     <div class="container">
         <h1>🍽️ MyMeal おかず提案ツール</h1>
@@ -108,5 +112,16 @@
     </div>
 
     <script src="js/script.js"></script>
+
+    <script src="js/script.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(() => console.log('PWA: 登録成功！'))
+          .catch(err => console.error('PWA: 登録失敗', err));
+      }
+    </script>
+    </body>
+    
 </body>
 </html>

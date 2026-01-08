@@ -1,0 +1,15 @@
+{
+  "name": "MyMeal おかず提案ツール",
+  "short_name": "MyMeal",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6c5ce7",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/857/857681.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
