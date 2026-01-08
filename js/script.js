@@ -70,35 +70,48 @@ document.addEventListener('DOMContentLoaded', () => {
     // おすすめボタン
     document.getElementById('suggestBtn').addEventListener('click', suggestMeal);
 
+
+    // ==========================================
+// 4. データ取得の開始（ここが重要！）
     fetchMeals();
 
     // ==========================================
-// データ取得
+    // 内部関数（この中に入れます）
     // ==========================================
+
     async function fetchMeals() {
-        const { data, error } = await supabaseClient.from('meals').select('*');
-        
-        if (error) {
-            alert('データの読み込みに失敗しました: ' + error.message);
-            return;
+        try {
+            const { data, error } = await supabaseClient.from('meals').select('*');
+            if (error) throw error;
+
+            // Supabaseのデータをアプリ用形式に変換
+            allMeals = data.map(item => {
+                try {
+                    // もしnameがJSON形式なら展開、そうでなければそのまま
+                    return { id: item.id, ...JSON.parse(item.name) };
+                } catch (e) {
+                    return { id: item.id, name: item.name, category: item.category };
+                }
+            });
+
+            displayMeals(allMeals);
+            console.log('データの読み込みに成功しました'); // アラートの代わりにログに出す
+        } catch (error) {
+            console.error('読み込み失敗:', error.message);
         }
-
-        // データの変換（もしSupabaseにそのまま保存しているならシンプルになります）
-        allMeals = data.map(item => {
-            // もしnameカラムにJSON文字列が入っている場合はそのまま、
-            // そうでない場合は項目の組み合わせを作ります
-            try {
-                return { id: item.id, ...JSON.parse(item.name) };
-            } catch (e) {
-                return { id: item.id, name: item.name }; // JSONじゃない場合
-            }
-        });
-
-        displayMeals(allMeals);
-
-        // ✅ ここをコメントアウト（// をつける）すれば、立ち上げ時のアラートが消えます！
-        // alert('データを読み込みました！'); 
     }
+
+    function filterList(category) {
+        const items = document.querySelectorAll('.meal-item');
+        items.forEach(item => {
+            const itemCategory = item.getAttribute('data-category'); 
+            item.style.display = (category === 'all' || itemCategory === category) ? 'block' : 'none';
+        });
+    }
+
+    // displayMeals, saveMeal, suggestMeal などの他の関数も
+    // この DOMContentLoaded の「内側」にあることを確認してください。
+});
 
     // ==========================================
     // 画面への表示処理
