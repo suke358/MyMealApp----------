@@ -70,7 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // おすすめボタン
     document.getElementById('suggestBtn').addEventListener('click', suggestMeal);
 
-    // データ取得
+    fetchMeals();
+
+    // ==========================================
+// データ取得
+    // ==========================================
     async function fetchMeals() {
         const { data, error } = await supabaseClient.from('meals').select('*');
         
