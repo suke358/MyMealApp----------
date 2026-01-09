@@ -38,18 +38,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // 保存ボタンのイベントリスナー
     const saveBtn = document.getElementById('saveButton');
     if (!saveBtn) {
-        console.error('保存ボタン（id="saveButton"）が見つかりません');
+        console.error('❌ 保存ボタン（id="saveButton"）が見つかりません');
     } else {
+        console.log('✅ 保存ボタンが見つかりました:', saveBtn);
         // スマホの「タップ」とPCの「クリック」両方で反応するようにします
         saveBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            console.log("保存ボタンが押されました");
+            e.stopPropagation();
+            console.log('🔵 保存ボタンがクリックされました');
             saveMeal();
         });
+        console.log('✅ 保存ボタンのイベントリスナーが設定されました');
     }
 
     // 検索機能
-    document.getElementById('searchInput').addEventListener('input', filterMeals);
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            console.log('🔍 検索入力が変更されました:', e.target.value);
+            filterMeals();
+        });
+        console.log('✅ 検索入力欄のイベントリスナーが設定されました');
+    } else {
+        console.error('❌ 検索入力欄（id="searchInput"）が見つかりません');
+    }
 
     // フィルターボタン（チップ）をクリックした時の処理
     document.querySelectorAll('.filter-chip').forEach(button => {
@@ -72,7 +84,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // おすすめボタン
-    document.getElementById('suggestBtn').addEventListener('click', suggestMeal);
+    const suggestBtn = document.getElementById('suggestBtn');
+    if (suggestBtn) {
+        suggestBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('🎲 おすすめボタンがクリックされました');
+            suggestMeal();
+        });
+    } else {
+        console.error('❌ おすすめボタン（id="suggestBtn"）が見つかりません');
+    }
+
+    // 編集・削除ボタンのイベント委譲（動的に生成されるボタンに対応）
+    const mealList = document.getElementById('mealsList');
+    if (mealList) {
+        mealList.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.classList.contains('edit-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const index = parseInt(target.getAttribute('data-index'));
+                console.log(`✏️ 編集ボタンがクリックされました (index: ${index})`);
+                editMeal(index);
+            } else if (target.classList.contains('delete-btn')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const index = parseInt(target.getAttribute('data-index'));
+                console.log(`🗑️ 削除ボタンがクリックされました (index: ${index})`);
+                deleteMeal(index);
+            }
+        });
+        console.log('✅ 編集・削除ボタンのイベント委譲が設定されました');
+    } else {
+        console.error('❌ mealsList要素が見つかりません');
+    }
 
     // ==========================================
     // 4. データ取得の開始（ここが重要！）
@@ -147,8 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="meal-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h4 class="meal-name" style="margin:0;">${name} ${favoriteIcon}</h4>
                     <div>
-                        <button class="edit-btn" onclick="editMeal(${index})" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
-                        <button class="delete-btn" onclick="deleteMeal(${index})" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
+                        <button class="edit-btn" data-index="${index}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
+                        <button class="delete-btn" data-index="${index}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
                     </div>
                 </div>
                 <div class="meal-details">
@@ -163,7 +208,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 新しく追加：編集を実行する関数
     function editMeal(index) {
+        console.log(`📝 editMeal関数が呼び出されました (index: ${index})`);
+        if (index < 0 || index >= allMeals.length) {
+            console.error(`❌ 無効なインデックス: ${index} (allMeals.length: ${allMeals.length})`);
+            alert('編集するデータが見つかりません');
+            return;
+        }
         const meal = allMeals[index];
+        console.log('📝 編集対象のデータ:', meal);
         
         // フォームに値をセット
         document.getElementById('mealName').value = meal.料理名 || '';
@@ -351,7 +403,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 削除処理
     // ==========================================
     async function deleteMeal(index) {
-        if (!confirm('このおかずを削除しますか？')) return;
+        console.log(`🗑️ deleteMeal関数が呼び出されました (index: ${index})`);
+        if (index < 0 || index >= allMeals.length) {
+            console.error(`❌ 無効なインデックス: ${index} (allMeals.length: ${allMeals.length})`);
+            alert('削除するデータが見つかりません');
+            return;
+        }
+        console.log('🗑️ 削除対象のデータ:', allMeals[index]);
+        if (!confirm('このおかずを削除しますか？')) {
+            console.log('🗑️ 削除がキャンセルされました');
+            return;
+        }
 
         const { error } = await supabaseClient.from('meals').delete().eq('id', allMeals[index].id);
         if (error) {
@@ -364,8 +426,9 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('削除しました！');
     }
 
-    // HTMLのonclick属性から呼び出される関数をグローバルスコープに公開
-    window.editMeal = editMeal;
-    window.deleteMeal = deleteMeal;
+    // HTMLのoninput属性から呼び出される関数をグローバルスコープに公開
+    // （検索入力欄のoninput属性で使用）
     window.filterMeals = filterMeals;
+    
+    console.log('✅ すべてのイベントリスナーが設定されました');
 });
