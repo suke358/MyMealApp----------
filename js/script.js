@@ -355,32 +355,43 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             if (editingIndex !== null) {
                 // 更新処理
+                console.log('📝 データベース更新を開始します...');
                 const { error } = await supabaseClient
                     .from('meals')
                     .update({ name: JSON.stringify(data) })
                     .eq('id', allMeals[editingIndex].id);
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ データベース更新エラー:', error);
+                    throw error;
+                }
+                console.log('✅ DB保存成功（更新）');
                 alert("修正しました！");
             } else {
                 // 新規保存
+                console.log('📝 データベース保存を開始します...');
                 const { data: insertData, error } = await supabaseClient
                     .from('meals')
                     .insert({ name: JSON.stringify(data) })
                     .select();
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ データベース保存エラー:', error);
+                    throw error;
+                }
+                console.log('✅ DB保存成功（新規）');
                 alert("保存しました！");
             }
 
             // 保存成功後にデータを再取得して表示を更新（これが一番確実です）
+            console.log('🔄 データを再取得します...');
             await fetchMeals(); 
 
             // フォームのリセット（既存のコードのままでOK）
             resetForm(); 
 
         } catch (err) {
-            console.error('エラー発生:', err.message);
+            console.error('❌ エラー発生:', err.message);
             alert('エラーが発生しました: ' + err.message);
         }
     }
@@ -415,14 +426,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const { error } = await supabaseClient.from('meals').delete().eq('id', allMeals[index].id);
+        // Supabaseからデータを削除
+        const mealId = allMeals[index].id;
+        console.log(`🗑️ データベースから削除を開始します (id: ${mealId})...`);
+        const { error } = await supabaseClient
+            .from('meals')
+            .delete()
+            .eq('id', mealId);
+        
         if (error) {
+            console.error('❌ データベース削除エラー:', error);
             alert('削除に失敗しました: ' + error.message);
             return;
         }
 
-        allMeals.splice(index, 1);
-        displayMeals(allMeals);
+        console.log('✅ DB削除成功');
+        
+        // データベースから最新データを再取得して表示を更新（これが一番確実です）
+        console.log('🔄 データを再取得します...');
+        await fetchMeals();
+        
         alert('削除しました！');
     }
 
