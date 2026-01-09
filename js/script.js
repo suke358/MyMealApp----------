@@ -547,11 +547,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const randomMeal = candidates[Math.floor(Math.random() * candidates.length)];
+        const mealName = randomMeal.料理名 || randomMeal.name || randomMeal.meal_name || '名前なし';
+        const mainIngredient = randomMeal.メイン食材 || randomMeal.main_ingredient || '-';
+        const memo = randomMeal.メモ || randomMeal.memo || '';
+        
         document.getElementById('suggestionArea').innerHTML = `
             <div class="suggestion-result">
-                <h4>🎲 今日のおすすめ: ${randomMeal.料理名}</h4>
-                <p><strong>メイン食材:</strong> ${randomMeal.メイン食材 || '-'}</p>
-                ${randomMeal.メモ ? `<p><strong>メモ:</strong> ${randomMeal.メモ}</p>` : ''}
+                <h4>🎲 今日のおすすめ: ${mealName}</h4>
+                <p><strong>メイン食材:</strong> ${mainIngredient}</p>
+                ${memo ? `<p><strong>メモ:</strong> ${memo}</p>` : ''}
             </div>
         `;
     }
