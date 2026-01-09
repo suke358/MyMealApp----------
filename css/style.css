@@ -4,17 +4,21 @@
     box-sizing: border-box;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
+
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: #f5f7fa;
     min-height: 100vh;
     padding: 20px;
     padding-bottom: 100px;
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 800px;
     margin: 0 auto;
     width: 100%;
 }
@@ -397,26 +401,24 @@ textarea {
     margin-top: 20px;
 }
 
-/* おかず1つずつのカード - モダンなカード型デザイン */
+/* おかず1つずつのカード - プロが作った便利ツールのようなモダンなカード型デザイン */
 .meal-item {
     background: #ffffff;
     padding: clamp(18px, 3.5vw, 24px);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e8ecef;
-    border-left: 4px solid #667eea;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+    border: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 }
 
 .meal-item:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
-    border-color: #d0d7de;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
 }
 
 .meal-item.beef {
@@ -498,6 +500,7 @@ textarea {
     align-items: flex-start;
     gap: 10px;
     margin-bottom: 8px;
+    position: relative;
 }
 
 .meal-name {
@@ -507,6 +510,9 @@ textarea {
     margin: 0;
     flex: 1;
     line-height: 1.4;
+    position: relative;
+    display: inline-block;
+    padding-right: 0;
 }
 
 .meal-details {
@@ -536,24 +542,55 @@ textarea {
     margin: 0;
 }
 
-/* 日付と料理名を並べて表示 */
+/* 日付と料理名を並べて表示 - 日付は料理名の左側に小さめのグレー文字で */
 .meal-date-row {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    align-items: baseline;
+    gap: 10px;
     margin-bottom: 8px;
     flex-wrap: wrap;
+    position: relative;
+    width: 100%;
 }
 
 .meal-date {
-    font-size: clamp(11px, 1.8vw, 12px);
+    font-size: clamp(10px, 1.6vw, 11px);
     color: #95a5a6;
-    font-weight: 500;
+    font-weight: 400;
     background: transparent;
     padding: 0;
     border-radius: 0;
     white-space: nowrap;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
+    min-width: 0;
+    flex-shrink: 0;
+    order: -1;
+    line-height: 1.2;
+    margin-right: auto;
+}
+
+/* 料理名の右肩に日付を配置するオプション（必要に応じて使用） */
+.meal-name-wrapper {
+    position: relative;
+    display: inline-block;
+    flex: 1;
+}
+
+.meal-date-right {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: clamp(10px, 1.6vw, 11px);
+    color: #95a5a6;
+    font-weight: 400;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+}
+
+/* 日付が空の場合もスペースを確保 */
+.meal-date:empty {
+    display: none;
 }
 
 .edit-btn, .delete-btn {
@@ -586,14 +623,20 @@ textarea {
     font-size: clamp(14px, 3vw, 18px);
 }
 
-/* PC表示: 最大幅を制限して中央寄せ */
+/* PC表示: 中央にキュッとまとまる */
 @media (min-width: 768px) {
+    body {
+        padding: 30px 20px;
+    }
+    
     .container {
-        max-width: 900px;
+        max-width: 800px;
+        margin: 0 auto;
     }
     
     #mealsList {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
     
     .category-buttons {
@@ -605,7 +648,14 @@ textarea {
     }
     
     .meal-item {
-        padding: 20px;
+        padding: 24px;
+        border-radius: 16px;
+    }
+    
+    .form-section,
+    .meals-section {
+        border-radius: 16px;
+        padding: 30px;
     }
 }
 
@@ -625,21 +675,29 @@ textarea {
     }
 }
 
-/* スマホ表示: 1カラム、指で押しやすいボタンサイズ */
+/* スマホ表示: 全幅、指で押しやすいボタンサイズ */
 @media (max-width: 479px) {
     body {
-        padding: 10px;
+        padding: 12px;
         padding-bottom: 80px;
     }
     
     .container {
         max-width: 100%;
+        width: 100%;
     }
     
     .form-section,
     .meals-section {
-        padding: 15px;
-        border-radius: 15px;
+        padding: 16px;
+        border-radius: 12px;
+        width: 100%;
+    }
+    
+    .meal-item {
+        width: 100%;
+        padding: 16px;
+        border-radius: 12px;
     }
     
     .category-buttons {
