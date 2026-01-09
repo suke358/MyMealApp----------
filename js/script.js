@@ -216,11 +216,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         ...JSON.parse(item.name) 
                     };
                     
-                    // 日付を日本の読みやすい形式（例: 2024/01/10 12:30）に変換
+                    // 日付を日本時間に変換（toLocaleString('ja-JP')を使用）
                     if (parsedData.created_at) {
-                        parsedData.formattedDate = formatDateTime(parsedData.created_at);
-                        if (idx < 3) {
-                            console.log(`📅 データ[${idx}] 日付変換: ${parsedData.created_at} → ${parsedData.formattedDate}`);
+                        try {
+                            parsedData.formattedDate = new Date(parsedData.created_at).toLocaleString('ja-JP');
+                            if (idx < 3) {
+                                console.log(`📅 データ[${idx}] 日付変換: ${parsedData.created_at} → ${parsedData.formattedDate}`);
+                            }
+                        } catch (e) {
+                            console.error(`❌ 日付変換エラー [${idx}]:`, e);
+                            parsedData.formattedDate = '';
                         }
                     } else {
                         parsedData.formattedDate = '';
@@ -246,11 +251,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         console.warn(`⚠️ データ[${idx}]（フォールバック）にcreated_atが存在しません。ID: ${fallbackData.id}`);
                     }
                     
-                    // 日付を日本の読みやすい形式に変換
+                    // 日付を日本時間に変換（toLocaleString('ja-JP')を使用）
                     if (fallbackData.created_at) {
-                        fallbackData.formattedDate = formatDateTime(fallbackData.created_at);
-                        if (idx < 3) {
-                            console.log(`📅 データ[${idx}] 日付変換（フォールバック）: ${fallbackData.created_at} → ${fallbackData.formattedDate}`);
+                        try {
+                            fallbackData.formattedDate = new Date(fallbackData.created_at).toLocaleString('ja-JP');
+                            if (idx < 3) {
+                                console.log(`📅 データ[${idx}] 日付変換（フォールバック）: ${fallbackData.created_at} → ${fallbackData.formattedDate}`);
+                            }
+                        } catch (e) {
+                            console.error(`❌ 日付変換エラー [${idx}]（フォールバック）:`, e);
+                            fallbackData.formattedDate = '';
                         }
                     } else {
                         fallbackData.formattedDate = '';
@@ -344,8 +354,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('❌ データにIDが存在しません:', meal);
             }
             
-            // 日付の取得とフォーマット（日本の読みやすい形式: 2024/01/10 12:30）
-            const formattedDate = meal.formattedDate || (meal.created_at ? formatDateTime(meal.created_at) : '');
+            // 日付の取得とフォーマット（日本時間に変換: toLocaleString('ja-JP')を使用）
+            let formattedDate = meal.formattedDate || '';
+            if (!formattedDate && meal.created_at) {
+                try {
+                    formattedDate = new Date(meal.created_at).toLocaleString('ja-JP');
+                } catch (e) {
+                    console.error(`❌ 日付変換エラー [${index}]:`, e);
+                    formattedDate = '';
+                }
+            }
             console.log(`📅 データ[${index}] 日付表示: ${formattedDate || '日付なし'}`);
             
             item.innerHTML = `
@@ -355,8 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="meal-header">
                     <div class="meal-date-row">
-                        <div class="meal-date">${formattedDate || ''}</div>
-                        <h4 class="meal-name">${name} ${favoriteIcon}</h4>
+                        <h4 class="meal-name">${name} ${favoriteIcon}${formattedDate ? `<small class="date-text">${formattedDate}</small>` : ''}</h4>
                     </div>
                     <div>
                         <button class="edit-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>

@@ -515,6 +515,17 @@ textarea {
     padding-right: 0;
 }
 
+/* 日付テキストのスタイル */
+.meal-name .date-text {
+    display: inline-block;
+    font-size: clamp(10px, 1.6vw, 11px);
+    color: #95a5a6;
+    font-weight: 400;
+    margin-left: 10px;
+    letter-spacing: 0.03em;
+    vertical-align: baseline;
+}
+
 .meal-details {
     display: flex;
     flex-direction: column;
