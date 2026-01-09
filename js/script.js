@@ -507,55 +507,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Supabaseからデータを削除
-            // IDの型を確実に一致させるため、数値型と文字列型の両方を試す
-            console.log(`🗑️ データベースから削除を開始します (id: ${idToDelete}, 型: ${typeof idToDelete})...`);
+            // IDを正確に指定して削除（Supabaseの削除ポリシーに対応）
+            console.log(`🗑️ データベースから削除を開始します`);
+            console.log(`🗑️ 削除対象ID: ${idToDelete} (型: ${typeof idToDelete})`);
+            console.log(`🗑️ 元のID: ${mealId} (型: ${typeof mealId})`);
             
+            // SupabaseのID列を確実に指定して削除
             // まず数値型で試す（Supabaseの主キーは通常数値型）
-            let { data, error } = await supabaseClient
+            let deleteResult = await supabaseClient
                 .from('meals')
                 .delete()
                 .eq('id', idToDelete)
                 .select(); // 削除されたデータを返す
             
+            let { data, error } = deleteResult;
+            
             // 数値型で失敗した場合、元のID（文字列型）で再試行
             if (error || !data || data.length === 0) {
                 console.log(`🔄 数値型での削除が失敗したため、元のID型で再試行します...`);
-                ({ data, error } = await supabaseClient
+                deleteResult = await supabaseClient
                     .from('meals')
                     .delete()
                     .eq('id', mealId)
-                    .select());
+                    .select();
+                ({ data, error } = deleteResult);
             }
             
+            // エラーチェック（削除ポリシーによるエラーも含む）
             if (error) {
-                console.error('❌ データベース削除エラー:', error);
+                console.error('❌ データベース削除エラーが発生しました');
+                console.error('❌ エラーメッセージ:', error.message);
+                console.error('❌ エラーコード:', error.code);
                 console.error('❌ エラー詳細:', JSON.stringify(error, null, 2));
+                console.error('❌ 削除対象ID:', idToDelete, '(型:', typeof idToDelete, ')');
+                console.error('❌ 元のID:', mealId, '(型:', typeof mealId, ')');
+                
+                // ユーザーにエラーを通知
                 alert('削除に失敗しました: ' + error.message);
                 return;
             }
 
-            // 削除結果の確認
+            // 削除結果の確認（削除ポリシーが有効な場合、削除が許可されていない場合はdataが空になる）
             if (data && data.length > 0) {
                 console.log(`✅ DB削除成功: ${data.length}件のデータが削除されました`);
                 console.log('✅ 削除されたデータ:', data);
+                
+                // データベースの削除が成功したことを確認してから、画面を更新
+                console.log('🔄 削除成功を確認しました。データを再取得して画面を更新します...');
+                await fetchMeals();
+                
+                console.log('✅ 削除処理が完了しました');
+                alert('削除しました！');
             } else {
-                console.warn('⚠️ 削除されたデータが0件です。IDが正しくない可能性があります。');
+                // 削除されたデータが0件の場合（削除ポリシーで拒否された可能性）
+                console.warn('⚠️ 削除されたデータが0件です');
+                console.warn('⚠️ 削除ポリシーで拒否された可能性があります');
                 console.warn('⚠️ 試行した削除対象ID:', idToDelete, '(型:', typeof idToDelete, ')');
                 console.warn('⚠️ 元のID:', mealId, '(型:', typeof mealId, ')');
-                alert('削除に失敗しました: データが見つかりませんでした');
+                
+                // エラーがない場合でも、データが削除されていない場合はエラーとして扱う
+                if (!error) {
+                    console.error('❌ エラーは発生しませんでしたが、データが削除されませんでした');
+                    console.error('❌ 削除ポリシーの設定を確認してください');
+                }
+                
+                alert('削除に失敗しました: データが見つかりませんでした。削除ポリシーを確認してください。');
                 return;
             }
-
-            // データベースの削除が成功した後にのみ、画面を更新
-            console.log('🔄 データを再取得して画面を更新します...');
-            await fetchMeals();
-            
-            console.log('✅ 削除処理が完了しました');
-            alert('削除しました！');
             
         } catch (err) {
-            console.error('❌ 削除処理中にエラーが発生しました:', err);
+            console.error('❌ 削除処理中に予期しないエラーが発生しました');
+            console.error('❌ エラーメッセージ:', err.message);
+            console.error('❌ エラースタック:', err.stack);
             console.error('❌ エラー詳細:', JSON.stringify(err, null, 2));
+            console.error('❌ 削除対象ID:', idToDelete, '(型:', typeof idToDelete, ')');
+            console.error('❌ 元のID:', mealId, '(型:', typeof mealId, ')');
+            
             alert('削除中にエラーが発生しました: ' + err.message);
         }
     }
