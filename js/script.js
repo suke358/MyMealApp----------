@@ -36,12 +36,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 保存ボタンのイベントリスナー
-    const saveBtn = document.getElementById('saveBtn');
-    // スマホの「タップ」とPCの「クリック」両方で反応するようにします
-    saveBtn.onclick = (e) => {
-    console.log("保存ボタンが押されました");
-    saveMeal();
-};
+    const saveBtn = document.getElementById('saveButton');
+    if (!saveBtn) {
+        console.error('保存ボタン（id="saveButton"）が見つかりません');
+    } else {
+        // スマホの「タップ」とPCの「クリック」両方で反応するようにします
+        saveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log("保存ボタンが押されました");
+            saveMeal();
+        });
+    }
 
     // 検索機能
     document.getElementById('searchInput').addEventListener('input', filterMeals);
@@ -59,25 +64,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function filterList(category) {
-        const items = document.querySelectorAll('.meal-item'); // 各おかずの要素
+        const items = document.querySelectorAll('.meal-item');
         items.forEach(item => {
-            // 各アイテムが持っているカテゴリーデータを確認
             const itemCategory = item.getAttribute('data-category'); 
-            
-            if (category === 'all' || itemCategory === category) {
-                item.style.display = 'block';
-            } else {
-                item.style.display = 'none';
-            }
+            item.style.display = (category === 'all' || itemCategory === category) ? 'block' : 'none';
         });
     }
 
     // おすすめボタン
     document.getElementById('suggestBtn').addEventListener('click', suggestMeal);
 
-
     // ==========================================
-// 4. データ取得の開始（ここが重要！）
+    // 4. データ取得の開始（ここが重要！）
+    // ==========================================
     fetchMeals();
 
     // ==========================================
@@ -105,18 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('読み込み失敗:', error.message);
         }
     }
-
-    function filterList(category) {
-        const items = document.querySelectorAll('.meal-item');
-        items.forEach(item => {
-            const itemCategory = item.getAttribute('data-category'); 
-            item.style.display = (category === 'all' || itemCategory === category) ? 'block' : 'none';
-        });
-    }
-
-    // displayMeals, saveMeal, suggestMeal などの他の関数も
-    // この DOMContentLoaded の「内側」にあることを確認してください。
-});
 
     // ==========================================
     // 画面への表示処理
@@ -148,7 +135,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const name = meal.料理名 || meal.name || '名前なし';
             const ingredient = meal.メイン食材 || meal.mainIngredient || '-';
             const memo = meal.メモ || meal.memo || '';
-            const genre = (meal.ジャンル === 'その他' ? '麺類' : meal.ジャンル) || meal.genre || '';
+            const genreValue = meal.ジャンル || meal.genre || '';
+            const genre = genreValue === 'その他' ? '麺類' : genreValue;
             const genreClass = genre === '和食' ? 'japanese' : genre === '洋食' ? 'western' : genre === '中華' ? 'chinese' : genre === '麺類' ? 'noodle' : 'other';
 
             item.innerHTML = `
@@ -274,7 +262,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 保存処理
     // ==========================================
-// --- 修正ポイント：保存・更新の処理を確実に完了させる ---
+    async function saveMeal() {
+        console.log('saveMeal関数が実行されました');
+        
+        // フォームからデータを取得
+        const mealName = document.getElementById('mealName').value.trim();
+        const mainIngredient = document.getElementById('mainIngredient').value.trim();
+        const memo = document.getElementById('memo').value.trim();
+        const lastAte = document.getElementById('lastAte').value;
+        const favorite = document.getElementById('favorite').checked;
+        
+        // バリデーション
+        if (!mealName) {
+            alert('食事名を入力してください');
+            return;
+        }
+        
+        if (!selectedCategory) {
+            alert('カテゴリーを選択してください');
+            return;
+        }
+        
+        if (!selectedGenre) {
+            alert('ジャンルを選択してください');
+            return;
+        }
+        
+        // データオブジェクトを構築
+        const data = {
+            料理名: mealName,
+            メイン食材: mainIngredient,
+            カテゴリー: selectedCategory,
+            ジャンル: selectedGenre,
+            メモ: memo,
+            '最後に食べた日': lastAte || null,
+            お気に入り: favorite ? 'はい' : 'いいえ'
+        };
+        
+        // --- 修正ポイント：保存・更新の処理を確実に完了させる ---
         try {
             if (editingIndex !== null) {
                 // 更新処理
@@ -297,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 保存成功後にデータを再取得して表示を更新（これが一番確実です）
-            fetchMeals(); 
+            await fetchMeals(); 
 
             // フォームのリセット（既存のコードのままでOK）
             resetForm(); 
@@ -305,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error('エラー発生:', err.message);
             alert('エラーが発生しました: ' + err.message);
-        
+        }
     }
 
     // フォームリセットを関数にまとめるとスッキリします
@@ -338,3 +363,9 @@ document.addEventListener('DOMContentLoaded', () => {
         displayMeals(allMeals);
         alert('削除しました！');
     }
+
+    // HTMLのonclick属性から呼び出される関数をグローバルスコープに公開
+    window.editMeal = editMeal;
+    window.deleteMeal = deleteMeal;
+    window.filterMeals = filterMeals;
+});
