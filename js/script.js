@@ -57,13 +57,16 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.log('✅ 保存ボタンが見つかりました:', saveBtn);
         // スマホの「タップ」とPCの「クリック」両方で反応するようにします
-        saveBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🔵 保存ボタンがクリックされました');
-            saveMeal();
+        // 複数のイベントタイプに対応（確実にイベントが発火するように）
+        ['click', 'touchstart'].forEach(eventType => {
+            saveBtn.addEventListener(eventType, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log(`🔵 保存ボタンが${eventType}されました`);
+                saveMeal();
+            }, { passive: false });
         });
-        console.log('✅ 保存ボタンのイベントリスナーが設定されました');
+        console.log('✅ 保存ボタンのイベントリスナーが設定されました（click, touchstart）');
     }
 
     // 検索機能
@@ -113,45 +116,52 @@ document.addEventListener('DOMContentLoaded', () => {
     // 編集・削除ボタンのイベント委譲（動的に生成されるボタンに対応）
     const mealList = document.getElementById('mealsList');
     if (mealList) {
-        mealList.addEventListener('click', (e) => {
-            const target = e.target;
-            if (target.classList.contains('edit-btn')) {
-                // 画面のスクロールを完全に防ぐ
-                e.preventDefault();
-                e.stopPropagation();
+        // 複数のイベントタイプに対応（確実にイベントが発火するように）
+        ['click', 'touchstart'].forEach(eventType => {
+            mealList.addEventListener(eventType, (e) => {
+                const target = e.target;
+                // 親要素もチェック（ボタン内のアイコンがクリックされた場合）
+                const editBtn = target.closest('.edit-btn');
+                const deleteBtn = target.closest('.delete-btn');
                 
-                const index = parseInt(target.getAttribute('data-index'));
-                const mealId = target.getAttribute('data-id');
-                console.log(`✏️ 編集ボタンがクリックされました`);
-                console.log(`✏️ 配列インデックス: ${index}`);
-                console.log(`✏️ データID: ${mealId} (型: ${typeof mealId})`);
-                
-                // 編集処理を実行
-                editMeal(index);
-                
-                // 追加のスクロール防止（念のため）
-                return false;
-            } else if (target.classList.contains('delete-btn')) {
-                e.preventDefault();
-                e.stopPropagation();
-                // Supabaseのidを取得（data-id属性から）
-                const mealId = target.getAttribute('data-id');
-                const index = parseInt(target.getAttribute('data-index'));
-                
-                console.log(`🗑️ 削除ボタンがクリックされました`);
-                console.log(`🗑️ 送信しようとしているID: ${mealId} (型: ${typeof mealId})`);
-                console.log(`🗑️ 配列インデックス: ${index}`);
-                
-                if (!mealId) {
-                    console.error('❌ 削除ボタンにIDが設定されていません');
-                    alert('削除するデータのIDが見つかりません');
-                    return;
+                if (editBtn) {
+                    // 画面のスクロールを完全に防ぐ
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const index = parseInt(editBtn.getAttribute('data-index'));
+                    const mealId = editBtn.getAttribute('data-id');
+                    console.log(`✏️ 編集ボタンが${eventType}されました`);
+                    console.log(`✏️ 配列インデックス: ${index}`);
+                    console.log(`✏️ データID: ${mealId} (型: ${typeof mealId})`);
+                    
+                    // 編集処理を実行
+                    editMeal(index);
+                    
+                    // 追加のスクロール防止（念のため）
+                    return false;
+                } else if (deleteBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Supabaseのidを取得（data-id属性から）
+                    const mealId = deleteBtn.getAttribute('data-id');
+                    const index = parseInt(deleteBtn.getAttribute('data-index'));
+                    
+                    console.log(`🗑️ 削除ボタンが${eventType}されました`);
+                    console.log(`🗑️ 送信しようとしているID: ${mealId} (型: ${typeof mealId})`);
+                    console.log(`🗑️ 配列インデックス: ${index}`);
+                    
+                    if (!mealId) {
+                        console.error('❌ 削除ボタンにIDが設定されていません');
+                        alert('削除するデータのIDが見つかりません');
+                        return;
+                    }
+                    
+                    deleteMeal(mealId, index);
                 }
-                
-                deleteMeal(mealId, index);
-            }
+            }, { passive: false });
         });
-        console.log('✅ 編集・削除ボタンのイベント委譲が設定されました');
+        console.log('✅ 編集・削除ボタンのイベント委譲が設定されました（click, touchstart）');
     } else {
         console.error('❌ mealsList要素が見つかりません');
     }
@@ -187,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchMeals() {
+        console.log('🔄 fetchMeals関数が呼び出されました');
         try {
             console.log('🔄 データベースからデータを取得中...');
             // name列のみを取得（Supabaseのテーブルにはname列しかない）
@@ -194,6 +205,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 .from('meals')
                 .select('id, name, created_at, updated_at')
                 .order('updated_at', { ascending: false }); // updated_atで降順ソート（最新が上）
+            
+            console.log('🔄 Supabaseクエリ実行完了');
             
             if (error) {
                 console.error('❌ Supabaseからのデータ取得エラー:', error);
@@ -225,8 +238,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 try {
-                    // name列をJSONパースしてデータを取得
-                    const nameData = JSON.parse(item.name || '{}');
+                    console.log(`🔄 データ[${idx}]のパース処理開始: ID=${item.id}`);
+                    
+                    // name列をJSONパースしてデータを取得（エラーハンドリング強化）
+                    let nameData = {};
+                    if (item.name) {
+                        try {
+                            if (typeof item.name === 'string' && item.name.trim() !== '') {
+                                nameData = JSON.parse(item.name);
+                                console.log(`✅ データ[${idx}]のJSONパース成功`);
+                            } else {
+                                console.warn(`⚠️ データ[${idx}]のnameが空文字列または無効です`);
+                                nameData = {};
+                            }
+                        } catch (parseError) {
+                            console.error(`❌ データ[${idx}]のJSONパースエラー:`, parseError);
+                            console.error(`❌ name列の内容:`, item.name);
+                            // パースに失敗しても空オブジェクトで続行（画面が真っ白にならないように）
+                            nameData = {};
+                        }
+                    } else {
+                        console.warn(`⚠️ データ[${idx}]にname列が存在しません`);
+                        nameData = {};
+                    }
                     
                     // パースしたデータを統合
                     const parsedData = { 
@@ -278,31 +312,57 @@ document.addEventListener('DOMContentLoaded', () => {
                     return parsedData;
                 } catch (e) {
                     console.error(`❌ データ[${idx}]のパースエラー:`, e);
+                    console.error(`❌ エラー詳細:`, e.message);
+                    console.error(`❌ name列の内容:`, item.name);
+                    
+                    // フォールバック: name列を再度パースを試みる（エラーハンドリング強化）
+                    let fallbackNameData = {};
+                    if (item.name) {
+                        try {
+                            if (typeof item.name === 'string' && item.name.trim() !== '') {
+                                fallbackNameData = JSON.parse(item.name);
+                                console.log(`✅ データ[${idx}]のフォールバックJSONパース成功`);
+                            }
+                        } catch (parseError2) {
+                            console.error(`❌ データ[${idx}]のフォールバックJSONパースも失敗:`, parseError2);
+                            fallbackNameData = {};
+                        }
+                    }
+                    
                     const fallbackData = { 
                         id: item.id, 
                         created_at: item.created_at || null,
                         updated_at: item.updated_at || null,
-                        last_eaten_at: item.last_eaten_at || null,
-                        name: item.name, 
-                        category: item.category 
+                        ...fallbackNameData
                     };
                     
                     // カテゴリーは「海鮮」として統一されています
                     
+                    // 「最後に食べた日」を取得（name列のJSONオブジェクト内から）
+                    const fallbackLastEatenDate = fallbackData['最後に食べた日'] || null;
+                    
                     // last_eaten_at、updated_at、created_atが取得できているか確認（デバッグ用）
-                    if (!fallbackData.last_eaten_at && !fallbackData.updated_at && !fallbackData.created_at) {
-                        console.warn(`⚠️ データ[${idx}]（フォールバック）にlast_eaten_atもupdated_atもcreated_atも存在しません。ID: ${fallbackData.id}`);
+                    if (!fallbackLastEatenDate && !fallbackData.updated_at && !fallbackData.created_at) {
+                        console.warn(`⚠️ データ[${idx}]（フォールバック）に「最後に食べた日」もupdated_atもcreated_atも存在しません。ID: ${fallbackData.id}`);
                     }
                     
-                    // 表示用の日付を決定: last_eaten_atを優先、なければupdated_at、それもなければcreated_atを使用
-                    const dateToDisplay = fallbackData.last_eaten_at || fallbackData.updated_at || fallbackData.created_at;
-                    const dateType = fallbackData.last_eaten_at ? 'last_eaten_at' : (fallbackData.updated_at ? 'updated_at' : 'created_at');
+                    // 表示用の日付を決定: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_atを使用
+                    const dateToDisplay = fallbackLastEatenDate || fallbackData.updated_at || fallbackData.created_at;
+                    const dateType = fallbackLastEatenDate ? '最後に食べた日' : (fallbackData.updated_at ? 'updated_at' : 'created_at');
                     
-                    // 日付を日本形式に変換（toLocaleDateString('ja-JP')を使用）
+                    // 日付を日本形式に変換（YYYY/MM/DD形式）
                     if (dateToDisplay) {
                         try {
-                            fallbackData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                            // 「最後に食べた日」はYYYY-MM-DD形式なので、そのまま使用
+                            if (fallbackLastEatenDate) {
+                                const [year, month, day] = fallbackLastEatenDate.split('-');
+                                fallbackData.formattedDate = `${year}/${month}/${day}`;
+                            } else {
+                                // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換
+                                fallbackData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                            }
                             fallbackData.displayDateType = dateType; // 表示に使用した日付の種類を記録
+                            fallbackData.last_eaten_at = fallbackLastEatenDate; // 表示用に保持
                             if (idx < 3) {
                                 console.log(`📅 データ[${idx}] 日付変換（フォールバック）(${dateType}): ${dateToDisplay} → ${fallbackData.formattedDate}`);
                             }
@@ -314,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         fallbackData.formattedDate = '';
                         fallbackData.displayDateType = null;
-                        console.warn(`⚠️ データ[${idx}]（フォールバック）にlast_eaten_atもupdated_atもcreated_atも存在しません`);
+                        console.warn(`⚠️ データ[${idx}]（フォールバック）に「最後に食べた日」もupdated_atもcreated_atも存在しません`);
                     }
                     
                     // デバッグログ（最初の3件のみ）
@@ -373,11 +433,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 画面への表示処理
     // ==========================================
     function displayMeals(meals) {
+        console.log('📋 displayMeals関数が呼び出されました');
+        console.log(`📋 表示するデータ件数: ${meals ? meals.length : 0}`);
         const mealList = document.getElementById('mealsList');
-        if (!mealList) return;
+        if (!mealList) {
+            console.error('❌ mealsList要素が見つかりません');
+            return;
+        }
         mealList.innerHTML = '';
 
         if (!meals || meals.length === 0) {
+            console.log('📋 表示するデータがありません');
             mealList.innerHTML = '<p class="no-data">データがありません</p>';
             return;
         }
@@ -532,8 +598,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // 検索・フィルター処理
     // ==========================================
     function filterMeals() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const activeFilter = document.querySelector('.filter-chip.active').dataset.filter;
+        console.log('🔍 filterMeals関数が呼び出されました');
+        const searchInput = document.getElementById('searchInput');
+        if (!searchInput) {
+            console.error('❌ 検索入力欄が見つかりません');
+            return;
+        }
+        const searchTerm = searchInput.value.toLowerCase();
+        const activeFilterChip = document.querySelector('.filter-chip.active');
+        if (!activeFilterChip) {
+            console.error('❌ アクティブなフィルターチップが見つかりません');
+            return;
+        }
+        const activeFilter = activeFilterChip.dataset.filter;
+        console.log(`🔍 検索語: "${searchTerm}", フィルター: "${activeFilter}"`);
 
         let filteredMeals = allMeals.filter(meal => {
             const matchesSearch = !searchTerm ||
@@ -561,7 +639,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // おすすめ機能
     // ==========================================
     function suggestMeal() {
-        const activeFilter = document.querySelector('.filter-chip.active').dataset.filter;
+        console.log('🎲 suggestMeal関数が呼び出されました');
+        const activeFilterChip = document.querySelector('.filter-chip.active');
+        if (!activeFilterChip) {
+            console.error('❌ アクティブなフィルターチップが見つかりません');
+            return;
+        }
+        const activeFilter = activeFilterChip.dataset.filter;
+        console.log(`🎲 フィルター: "${activeFilter}"`);
         let candidates = allMeals;
 
         if (activeFilter !== 'all') {
@@ -742,15 +827,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // フォームリセットを関数にまとめるとスッキリします
     function resetForm() {
+        console.log('🔄 resetForm関数が呼び出されました');
         // フォームの値をクリア
-        document.getElementById('mealName').value = '';
-        document.getElementById('mainIngredient').value = '';
-        document.getElementById('memo').value = '';
+        const mealNameInput = document.getElementById('mealName');
+        const mainIngredientInput = document.getElementById('mainIngredient');
+        const memoInput = document.getElementById('memo');
+        
+        if (mealNameInput) mealNameInput.value = '';
+        if (mainIngredientInput) mainIngredientInput.value = '';
+        if (memoInput) memoInput.value = '';
         
         // ジャンルとカテゴリーの選択をリセット
-        genreOptions.forEach(b => b.classList.remove('active'));
+        if (genreOptions && genreOptions.length > 0) {
+            genreOptions.forEach(b => b.classList.remove('active'));
+        }
         selectedGenre = '';
-        categoryOptions.forEach(b => b.classList.remove('active'));
+        if (categoryOptions && categoryOptions.length > 0) {
+            categoryOptions.forEach(b => b.classList.remove('active'));
+        }
         selectedCategory = '';
         
         // 編集モードをリセット（重要！）
