@@ -175,12 +175,12 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchMeals() {
         try {
             console.log('🔄 データベースからデータを取得中...');
-            // すべての列を取得（id列とcreated_at列を含む）
-            // created_atで降順に並べ替え（最新が上に来るように）
+            // すべての列を取得（id列、created_at列、updated_at列を含む）
+            // クライアント側でupdated_at優先でソートするため、ここではupdated_atでソート
             const { data, error } = await supabaseClient
                 .from('meals')
                 .select('*')
-                .order('created_at', { ascending: false }); // 最新が上に来るように降順ソート
+                .order('updated_at', { ascending: false, nullsFirst: false }); // updated_atで降順ソート（nullは後ろに）
             
             if (error) {
                 console.error('❌ Supabaseからのデータ取得エラー:', error);
@@ -189,11 +189,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             console.log(`📊 取得したデータ件数: ${data ? data.length : 0}件`);
 
-            // created_atが取得できているか確認（デバッグ用）
+            // updated_atとcreated_atが取得できているか確認（デバッグ用）
+            const itemsWithoutUpdatedAt = data ? data.filter(item => !item.updated_at) : [];
             const itemsWithoutCreatedAt = data ? data.filter(item => !item.created_at) : [];
+            if (itemsWithoutUpdatedAt.length > 0) {
+                console.warn(`⚠️ updated_atが取得できていないデータが${itemsWithoutUpdatedAt.length}件あります`);
+            }
             if (itemsWithoutCreatedAt.length > 0) {
                 console.warn(`⚠️ created_atが取得できていないデータが${itemsWithoutCreatedAt.length}件あります`);
-                console.warn('⚠️ created_atが取得できていないデータ:', itemsWithoutCreatedAt);
             }
 
             // Supabaseのデータをアプリ用形式に変換
@@ -213,23 +216,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     const parsedData = { 
                         id: item.id, 
                         created_at: item.created_at || null, // created_atを保持（nullの場合はnull）
+                        updated_at: item.updated_at || null, // updated_atを保持（nullの場合はnull）
                         ...JSON.parse(item.name) 
                     };
                     
+                    // 表示用の日付を決定: updated_atを優先、なければcreated_atを使用
+                    const dateToDisplay = parsedData.updated_at || parsedData.created_at;
+                    const dateType = parsedData.updated_at ? 'updated_at' : 'created_at';
+                    
                     // 日付を日本時間に変換（toLocaleString('ja-JP')を使用）
-                    if (parsedData.created_at) {
+                    if (dateToDisplay) {
                         try {
-                            parsedData.formattedDate = new Date(parsedData.created_at).toLocaleString('ja-JP');
+                            parsedData.formattedDate = new Date(dateToDisplay).toLocaleString('ja-JP');
+                            parsedData.displayDateType = dateType; // 表示に使用した日付の種類を記録
                             if (idx < 3) {
-                                console.log(`📅 データ[${idx}] 日付変換: ${parsedData.created_at} → ${parsedData.formattedDate}`);
+                                console.log(`📅 データ[${idx}] 日付変換 (${dateType}): ${dateToDisplay} → ${parsedData.formattedDate}`);
                             }
                         } catch (e) {
                             console.error(`❌ 日付変換エラー [${idx}]:`, e);
                             parsedData.formattedDate = '';
+                            parsedData.displayDateType = null;
                         }
                     } else {
                         parsedData.formattedDate = '';
-                        console.warn(`⚠️ データ[${idx}]にcreated_atが存在しません。ID: ${parsedData.id}, 料理名: ${parsedData.料理名 || parsedData.name || 'なし'}`);
+                        parsedData.displayDateType = null;
+                        console.warn(`⚠️ データ[${idx}]にupdated_atもcreated_atも存在しません。ID: ${parsedData.id}, 料理名: ${parsedData.料理名 || parsedData.name || 'なし'}`);
                     }
                     
                     // デバッグログ（最初の3件のみ）
@@ -242,29 +253,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     const fallbackData = { 
                         id: item.id, 
                         created_at: item.created_at || null,
+                        updated_at: item.updated_at || null,
                         name: item.name, 
                         category: item.category 
                     };
                     
-                    // created_atが取得できているか確認（デバッグ用）
-                    if (!fallbackData.created_at) {
-                        console.warn(`⚠️ データ[${idx}]（フォールバック）にcreated_atが存在しません。ID: ${fallbackData.id}`);
+                    // updated_atとcreated_atが取得できているか確認（デバッグ用）
+                    if (!fallbackData.updated_at && !fallbackData.created_at) {
+                        console.warn(`⚠️ データ[${idx}]（フォールバック）にupdated_atもcreated_atも存在しません。ID: ${fallbackData.id}`);
                     }
                     
+                    // 表示用の日付を決定: updated_atを優先、なければcreated_atを使用
+                    const dateToDisplay = fallbackData.updated_at || fallbackData.created_at;
+                    const dateType = fallbackData.updated_at ? 'updated_at' : 'created_at';
+                    
                     // 日付を日本時間に変換（toLocaleString('ja-JP')を使用）
-                    if (fallbackData.created_at) {
+                    if (dateToDisplay) {
                         try {
-                            fallbackData.formattedDate = new Date(fallbackData.created_at).toLocaleString('ja-JP');
+                            fallbackData.formattedDate = new Date(dateToDisplay).toLocaleString('ja-JP');
+                            fallbackData.displayDateType = dateType; // 表示に使用した日付の種類を記録
                             if (idx < 3) {
-                                console.log(`📅 データ[${idx}] 日付変換（フォールバック）: ${fallbackData.created_at} → ${fallbackData.formattedDate}`);
+                                console.log(`📅 データ[${idx}] 日付変換（フォールバック）(${dateType}): ${dateToDisplay} → ${fallbackData.formattedDate}`);
                             }
                         } catch (e) {
                             console.error(`❌ 日付変換エラー [${idx}]（フォールバック）:`, e);
                             fallbackData.formattedDate = '';
+                            fallbackData.displayDateType = null;
                         }
                     } else {
                         fallbackData.formattedDate = '';
-                        console.warn(`⚠️ データ[${idx}]（フォールバック）にcreated_atが存在しません`);
+                        fallbackData.displayDateType = null;
+                        console.warn(`⚠️ データ[${idx}]（フォールバック）にupdated_atもcreated_atも存在しません`);
                     }
                     
                     // デバッグログ（最初の3件のみ）
@@ -281,26 +300,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(`❌ IDが存在しないデータが${idsWithoutId.length}件あります`);
             }
             
-            // すべてのデータのcreated_atを確認（デバッグ用）
-            const mealsWithoutCreatedAt = allMeals.filter(meal => !meal.created_at);
-            if (mealsWithoutCreatedAt.length > 0) {
-                console.warn(`⚠️ created_atが存在しないデータが${mealsWithoutCreatedAt.length}件あります`);
-                console.warn('⚠️ created_atが存在しないデータのID:', mealsWithoutCreatedAt.map(m => m.id));
+            // すべてのデータのupdated_atとcreated_atを確認（デバッグ用）
+            const mealsWithoutUpdatedAt = allMeals.filter(meal => !meal.updated_at && !meal.created_at);
+            if (mealsWithoutUpdatedAt.length > 0) {
+                console.warn(`⚠️ updated_atもcreated_atも存在しないデータが${mealsWithoutUpdatedAt.length}件あります`);
+                console.warn('⚠️ 日付が存在しないデータのID:', mealsWithoutUpdatedAt.map(m => m.id));
             }
 
-            // 並べ替え: created_atで降順（最新が上）- Supabaseで既に並べ替え済みだが、念のためクライアント側でもソート
-            console.log('🔄 created_atで降順にソート中（最新が上）...');
+            // 並べ替え: updated_atを優先、なければcreated_atで降順（最新が上）
+            // Supabaseで既に並べ替え済みだが、念のためクライアント側でもソート
+            console.log('🔄 updated_at優先で降順にソート中（最新が上）...');
             allMeals.sort((a, b) => {
-                // created_atがnullの場合は最後に配置
-                if (!a.created_at && !b.created_at) return 0;
-                if (!a.created_at) return 1;
-                if (!b.created_at) return -1;
+                // 比較用の日付を取得: updated_atを優先、なければcreated_at
+                const dateA = a.updated_at || a.created_at;
+                const dateB = b.updated_at || b.created_at;
                 
-                const dateA = new Date(a.created_at);
-                const dateB = new Date(b.created_at);
+                // 両方ともnullの場合は順序を変えない
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1; // dateAがnullの場合は後ろに
+                if (!dateB) return -1; // dateBがnullの場合は後ろに
                 
-                // 降順（新しい順）：dateB - dateA
-                return dateB - dateA;
+                const dateObjA = new Date(dateA);
+                const dateObjB = new Date(dateB);
+                
+                // 降順（新しい順）：dateObjB - dateObjA
+                return dateObjB - dateObjA;
             });
             
             console.log('✅ ソート完了: 最新のデータが一番上に配置されました');
@@ -354,17 +378,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('❌ データにIDが存在しません:', meal);
             }
             
-            // 日付の取得とフォーマット（日本時間に変換: toLocaleString('ja-JP')を使用）
-            let formattedDate = meal.formattedDate || '';
-            if (!formattedDate && meal.created_at) {
+            // 日付の取得とフォーマット（日本時間に変換: YYYY/MM/DD形式）
+            // updated_atを優先、なければcreated_atを使用
+            let formattedDate = '';
+            let dateLabel = '';
+            let dateToDisplay = null;
+            
+            // 表示用の日付を決定: updated_atを優先、なければcreated_atを使用
+            dateToDisplay = meal.updated_at || meal.created_at;
+            
+            if (dateToDisplay) {
                 try {
-                    formattedDate = new Date(meal.created_at).toLocaleString('ja-JP');
+                    const date = new Date(dateToDisplay);
+                    // YYYY/MM/DD形式に変換
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    formattedDate = `${year}/${month}/${day}`;
+                    dateLabel = meal.updated_at ? '最終更新: ' : '作成日時: ';
                 } catch (e) {
                     console.error(`❌ 日付変換エラー [${index}]:`, e);
                     formattedDate = '';
                 }
             }
-            console.log(`📅 データ[${index}] 日付表示: ${formattedDate || '日付なし'}`);
+            
+            // 日付表示用のテキストを生成（update-time用）
+            const updateTimeText = formattedDate ? `${dateLabel}${formattedDate}` : '';
+            console.log(`📅 データ[${index}] 日付表示: ${updateTimeText || '日付なし'}`);
             
             item.innerHTML = `
                 <div class="tag-container">
@@ -373,13 +413,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="meal-header">
                     <div class="meal-date-row">
-                        <h4 class="meal-name">${name} ${favoriteIcon}${formattedDate ? `<small class="date-text">${formattedDate}</small>` : ''}</h4>
+                        <h4 class="meal-name">${name} ${favoriteIcon}</h4>
                     </div>
                     <div>
                         <button class="edit-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
                         <button class="delete-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
                     </div>
                 </div>
+                ${updateTimeText ? `<div class="update-time">${updateTimeText}</div>` : ''}
                 <div class="meal-details">
                     <p class="main-ingredient"><strong>メイン食材:</strong> ${ingredient}</p>
                     ${memo ? `<p class="memo">${memo}</p>` : ''}
@@ -581,10 +622,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(`🔄 IDを数値型に変換: "${editingId}" → ${idToUpdate}`);
                 }
                 
+                // 自動記録: 更新日時を取得
+                const now = new Date();
+                const updatedAt = now.toISOString();
+                console.log('📅 更新日時を自動記録:', updatedAt);
+                
                 // supabase.from('meals').update(...).eq('id', editingId) を実行
                 const { data: updateResult, error } = await supabaseClient
                     .from('meals')
-                    .update({ name: JSON.stringify(data) })
+                    .update({ 
+                        name: JSON.stringify(data),
+                        updated_at: updatedAt // 更新日時を自動記録
+                    })
                     .eq('id', idToUpdate) // 正しいターゲット指定：今編集しているデータだけを書き換え
                     .select(); // 更新されたデータを返す
                 
@@ -622,15 +671,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 自動記録: 現在の日時を取得
                 const now = new Date();
                 const createdAt = now.toISOString();
+                const updatedAt = now.toISOString(); // 新規保存時もupdated_atを設定
                 console.log('📅 保存日時を自動記録:', createdAt);
+                console.log('📅 更新日時を自動記録:', updatedAt);
                 
                 // supabase.from('meals').insert を実行（updateではない）
-                // created_atを自動でDBに送る
+                // created_atとupdated_atを自動でDBに送る
                 const { data: insertData, error } = await supabaseClient
                     .from('meals')
                     .insert({ 
                         name: JSON.stringify(data),
-                        created_at: createdAt
+                        created_at: createdAt,
+                        updated_at: updatedAt // 新規保存時もupdated_atを設定
                     })
                     .select();
                 
