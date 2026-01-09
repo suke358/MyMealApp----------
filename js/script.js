@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // グローバル変数
     // ==========================================
+    let selectedGenre = '';
+    let selectedCategory = '';
     let editingIndex = null;
     let editingId = null; // 編集対象のSupabase ID
     let allMeals = [];
@@ -16,6 +18,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 初期化処理
     // ==========================================
+    // ジャンルボタンのイベントリスナー
+    document.querySelectorAll('.genre-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedGenre = this.dataset.genre;
+            console.log('✅ ジャンルを選択しました:', selectedGenre);
+        });
+    });
+
+    // カテゴリーボタンのイベントリスナー
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            selectedCategory = this.dataset.category;
+            console.log('✅ カテゴリーを選択しました:', selectedCategory);
+        });
+    });
+
     // 保存ボタンのイベントリスナー
     const saveBtn = document.getElementById('saveButton');
     if (!saveBtn) {
@@ -341,8 +363,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = document.createElement('div');
             item.className = 'meal-item';
             
-            // 料理名の取得
-            const name = meal.料理名 || meal.name || '名前なし';
+            // データの取得
+            const name = meal.料理名 || meal.name || meal.meal_name || '名前なし';
+            const genre = meal.ジャンル || meal.genre || '';
+            const category = meal.カテゴリー || meal.category || '';
+            const mainIngredient = meal.メイン食材 || meal.main_ingredient || '';
+            const memo = meal.メモ || meal.memo || '';
+            
+            // ジャンルとカテゴリーのタグを生成
+            let genreTag = '';
+            if (genre) {
+                const genreEmoji = genre === '和食' ? '🍱' : genre === '洋食' ? '🍝' : genre === '中華' ? '🥟' : genre === '麺類' ? '🍜' : '';
+                genreTag = `<span class="genre-tag">${genreEmoji} ${genre}</span>`;
+            }
+            
+            let categoryTag = '';
+            if (category) {
+                const categoryEmoji = category === '牛' ? '🐄' : category === '豚' ? '🐷' : category === '鶏' ? '🐔' : category === '海鮮' ? '🐟' : category === '野菜' ? '🥬' : category === 'その他' ? '🍽️' : '';
+                categoryTag = `<span class="category-tag">${categoryEmoji} ${category}</span>`;
+            }
             
             // 日付の取得とフォーマット（YYYY/MM/DD形式に変換）
             let formattedDate = '';
@@ -366,9 +405,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateDisplayText = formattedDate || '';
             
             item.innerHTML = `
+                <div class="tag-container">
+                    ${genreTag}
+                    ${categoryTag}
+                </div>
                 <div class="meal-card-content">
-                    <span class="meal-name">${name}</span>
-                    ${dateDisplayText ? `<span class="meal-date">${dateDisplayText}</span>` : ''}
+                    <div class="meal-header">
+                        <span class="meal-name">${name}</span>
+                        ${dateDisplayText ? `<span class="meal-date">${dateDisplayText}</span>` : ''}
+                    </div>
+                    ${mainIngredient ? `<p class="main-ingredient"><strong>メイン食材:</strong> ${mainIngredient}</p>` : ''}
+                    ${memo ? `<p class="memo">${memo}</p>` : ''}
+                </div>
+                <div class="meal-actions">
+                    <button class="edit-btn" data-index="${index}" data-id="${meal.id}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
+                    <button class="delete-btn" data-index="${index}" data-id="${meal.id}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
                 </div>
             `;
             mealList.appendChild(item);
@@ -395,8 +446,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         console.log(`📝 編集対象のID: ${mealId} (型: ${typeof mealId})`);
         
-        // フォームに値をセット（料理名のみ）
-        document.getElementById('mealName').value = meal.料理名 || meal.name || '';
+        // フォームに値をセット
+        document.getElementById('mealName').value = meal.料理名 || meal.name || meal.meal_name || '';
+        document.getElementById('mainIngredient').value = meal.メイン食材 || meal.main_ingredient || '';
+        document.getElementById('memo').value = meal.メモ || meal.memo || '';
+        
+        // ジャンルボタンの選択状態をリセットし、該当するものをアクティブに
+        const genre = meal.ジャンル || meal.genre || '';
+        document.querySelectorAll('.genre-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.genre === genre) {
+                btn.classList.add('active');
+            }
+        });
+        selectedGenre = genre;
+        
+        // カテゴリーボタンの選択状態をリセットし、該当するものをアクティブに
+        const category = meal.カテゴリー || meal.category || '';
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.category === category) {
+                btn.classList.add('active');
+            }
+        });
+        selectedCategory = category;
         
         // 編集モードに設定
         editingIndex = index;
@@ -434,13 +507,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 (meal.メモ && meal.メモ.toLowerCase().includes(searchTerm)) ||
                 (meal.ジャンル && meal.ジャンル.toLowerCase().includes(searchTerm));
 
+            const mealCategory = meal.カテゴリー || meal.category || '';
             const matchesFilter = activeFilter === 'all' ||
-                (activeFilter === '牛' && meal.カテゴリー === '牛') ||
-                (activeFilter === '豚' && meal.カテゴリー === '豚') ||
-                (activeFilter === '鶏' && meal.カテゴリー === '鶏') ||
-                (activeFilter === '海鮮' && meal.カテゴリー === '海鮮') ||
-                (activeFilter === '野菜' && meal.カテゴリー === '野菜') ||
-                (activeFilter === 'その他' && meal.カテゴリー === 'その他');
+                (activeFilter === '牛' && mealCategory === '牛') ||
+                (activeFilter === '豚' && mealCategory === '豚') ||
+                (activeFilter === '鶏' && mealCategory === '鶏') ||
+                (activeFilter === '海鮮' && mealCategory === '海鮮') ||
+                (activeFilter === '野菜' && mealCategory === '野菜') ||
+                (activeFilter === 'その他' && mealCategory === 'その他');
 
             return matchesSearch && matchesFilter;
         });
@@ -457,12 +531,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (activeFilter !== 'all') {
             candidates = allMeals.filter(meal => {
-                return (activeFilter === '牛' && meal.カテゴリー === '牛') ||
-                       (activeFilter === '豚' && meal.カテゴリー === '豚') ||
-                       (activeFilter === '鶏' && meal.カテゴリー === '鶏') ||
-                       (activeFilter === '海鮮' && meal.カテゴリー === '海鮮') ||
-                       (activeFilter === '野菜' && meal.カテゴリー === '野菜') ||
-                       (activeFilter === 'その他' && meal.カテゴリー === 'その他');
+                const mealCategory = meal.カテゴリー || meal.category || '';
+                return (activeFilter === '牛' && mealCategory === '牛') ||
+                       (activeFilter === '豚' && mealCategory === '豚') ||
+                       (activeFilter === '鶏' && mealCategory === '鶏') ||
+                       (activeFilter === '海鮮' && mealCategory === '海鮮') ||
+                       (activeFilter === '野菜' && mealCategory === '野菜') ||
+                       (activeFilter === 'その他' && mealCategory === 'その他');
             });
         }
 
@@ -489,8 +564,10 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`📝 現在のeditingId: ${editingId} (型: ${typeof editingId})`);
         console.log(`📝 editingIdが空か: ${editingId === null || editingId === undefined || editingId === ''}`);
         
-        // フォームからデータを取得（料理名のみ）
+        // フォームからデータを取得
         const mealName = document.getElementById('mealName').value.trim();
+        const mainIngredient = document.getElementById('mainIngredient').value.trim();
+        const memo = document.getElementById('memo').value.trim();
         
         // バリデーション
         if (!mealName) {
@@ -498,12 +575,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // データオブジェクトを構築（日時は自動記録されるため、手動入力は不要）
+        // データオブジェクトを構築
         const data = {
-            料理名: mealName
+            料理名: mealName,
+            ジャンル: selectedGenre || '',
+            カテゴリー: selectedCategory || '',
+            メイン食材: mainIngredient || '',
+            メモ: memo || ''
         };
         
-        // カテゴリーは「海鮮」として統一されています
+        console.log('📝 保存するデータ:', data);
         
         // --- 保存処理のロジック：新規保存と上書き更新を完全に切り分け ---
         try {
@@ -535,6 +616,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     .from('meals')
                     .update({ 
                         name: JSON.stringify(data),
+                        meal_name: mealName,
+                        genre: selectedGenre || '',
+                        main_ingredient: mainIngredient || '',
+                        memo: memo || '',
                         updated_at: updatedAt, // 更新日時を自動記録
                         last_eaten_at: lastEatenAt // 最後に食べた日時を自動記録
                     })
@@ -587,6 +672,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     .from('meals')
                     .insert({ 
                         name: JSON.stringify(data),
+                        meal_name: mealName,
+                        genre: selectedGenre || '',
+                        main_ingredient: mainIngredient || '',
+                        memo: memo || '',
                         created_at: createdAt,
                         updated_at: updatedAt, // 新規保存時もupdated_atを設定
                         last_eaten_at: lastEatenAt // 最後に食べた日時を自動記録
@@ -635,8 +724,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // フォームリセットを関数にまとめるとスッキリします
     function resetForm() {
-        // フォームの値をクリア（料理名のみ）
+        // フォームの値をクリア
         document.getElementById('mealName').value = '';
+        document.getElementById('mainIngredient').value = '';
+        document.getElementById('memo').value = '';
+        
+        // ジャンルとカテゴリーの選択をリセット
+        document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+        selectedGenre = '';
+        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        selectedCategory = '';
         
         // 編集モードをリセット（重要！）
         editingIndex = null;
