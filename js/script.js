@@ -434,12 +434,14 @@ document.addEventListener('DOMContentLoaded', () => {
             お気に入り: favorite ? 'はい' : 'いいえ'
         };
         
-        // --- 修正ポイント：保存・更新の処理を確実に完了させる ---
+        // --- 保存処理のロジック：新規保存と上書き更新を完全に切り分け ---
         try {
-            // editingIdが空でない場合は更新処理、空の場合は新規保存
+            // editingIdが空でない場合は上書き更新、空の場合は新規保存
             if (editingId !== null && editingId !== undefined && editingId !== '') {
-                // 更新処理（SupabaseのIDを直接使用）
-                console.log('📝 データベース更新を開始します...');
+                // ==========================================
+                // 上書き更新処理
+                // ==========================================
+                console.log(`📝 ID: ${editingId} の上書き更新を実行します`);
                 console.log(`📝 更新対象ID: ${editingId} (型: ${typeof editingId})`);
                 console.log('📝 更新データ:', data);
                 
@@ -450,10 +452,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(`🔄 IDを数値型に変換: "${editingId}" → ${idToUpdate}`);
                 }
                 
+                // supabase.from('meals').update(...).eq('id', editingId) を実行
                 const { data: updateResult, error } = await supabaseClient
                     .from('meals')
                     .update({ name: JSON.stringify(data) })
-                    .eq('id', idToUpdate)
+                    .eq('id', idToUpdate) // 正しいターゲット指定：今編集しているデータだけを書き換え
                     .select(); // 更新されたデータを返す
                 
                 if (error) {
@@ -467,19 +470,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (updateResult && updateResult.length > 0) {
                     console.log(`✅ DB更新成功: ${updateResult.length}件のデータが更新されました`);
                     console.log('✅ 更新されたデータ:', updateResult);
+                    console.log('✅ ID:', idToUpdate, 'の上書き更新が完了しました');
                 } else {
                     console.warn('⚠️ 更新されたデータが0件です。IDが正しくない可能性があります。');
                     console.warn('⚠️ 更新対象ID:', idToUpdate, '(型:', typeof idToUpdate, ')');
                     throw new Error('データの更新に失敗しました: データが見つかりませんでした');
                 }
                 
-                console.log('✅ DB保存成功（更新）');
                 alert("修正しました！");
+                
+                // 上書き保存成功後、editingIdを必ずnullに戻す
+                editingId = null;
+                console.log('✅ 上書き更新完了後、editingIdをnullにリセットしました');
+                
             } else {
-                // 新規保存（editingIdが空の場合）
-                console.log('📝 新規保存を開始します...');
+                // ==========================================
+                // 新規保存処理
+                // ==========================================
+                console.log('📝 新規保存を実行します');
                 console.log('📝 editingIdが空のため、新規保存として処理します');
                 
+                // supabase.from('meals').insert を実行（updateではない）
                 const { data: insertData, error } = await supabaseClient
                     .from('meals')
                     .insert({ name: JSON.stringify(data) })
@@ -495,7 +506,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (insertData && insertData.length > 0) {
                     console.log(`✅ DB保存成功（新規）: ${insertData.length}件のデータが保存されました`);
                     console.log('✅ 保存されたデータ:', insertData);
+                    console.log('✅ 新規保存が完了しました');
+                } else {
+                    console.warn('⚠️ 保存されたデータが0件です');
+                    throw new Error('データの保存に失敗しました');
                 }
+                
                 alert("保存しました！");
             }
 
@@ -503,8 +519,16 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('🔄 データを再取得して画面を更新します...');
             await fetchMeals(); 
 
-            // フォームのリセット（editingIdを空に戻し、ボタンを「保存」に戻す）
-            resetForm(); 
+            // フォームのリセット（入力欄を空にし、ボタンを「保存」に戻す）
+            // 注意: editingIdは上書き更新の場合は既にnullにリセット済み
+            resetForm();
+            
+            // 念のため、editingIdが確実にnullになっているか確認
+            if (editingId !== null) {
+                console.warn('⚠️ editingIdがリセットされていません。強制的にnullに設定します。');
+                editingId = null;
+            }
+            console.log('✅ 保存処理が完了しました。editingId:', editingId); 
 
         } catch (err) {
             console.error('❌ エラー発生:', err.message);
