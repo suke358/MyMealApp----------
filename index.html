@@ -58,10 +58,6 @@
             </div>
 
             <div class="form-group" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-                <div style="flex:1 1 160px;">
-                    <label for="lastAte">最後に食べた日</label>
-                    <input type="date" id="lastAte">
-                </div>
                 <label style="display:flex; align-items:center; gap:8px; font-weight:600; color:#333; cursor:pointer;">
                     <input type="checkbox" id="favorite" style="width:20px; height:20px;"> お気に入り
                 </label>
@@ -111,10 +107,14 @@
             <!-- 履歴リスト: JavaScriptで動的に生成される
                  各項目には以下の構造が含まれます:
                  - .meal-date-row: 日付と料理名を並べて表示
-                 - .meal-date: 日付表示用のspan（「2024/01/10 12:30」形式）
                  - .meal-name: 料理名
-                 - .meal-details: メイン食材、メモ、最後に食べた日などの詳細情報 -->
-            <div id="mealsList"></div>
+                 - .update-time: 自動記録された日時表示用（「最終更新: YYYY/MM/DD」形式）
+                 - .meal-details: メイン食材、メモなどの詳細情報
+                 - 各カードには自動で保存・更新日時が表示されます -->
+            <div id="mealsList">
+                <!-- 自動日時表示用の要素: JavaScriptで動的に生成される各カード内に
+                     <div class="update-time">最終更新: YYYY/MM/DD</div> が追加されます -->
+            </div>
         </div>
     </div>
 

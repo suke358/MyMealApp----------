@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('❌ データにIDが存在しません:', meal);
             }
             
-            // 日付の取得とフォーマット（日本時間に変換: YYYY/MM/DD形式）
+            // 日付の取得とフォーマット（日本時間に変換: YYYY/MM/DD HH:MM形式）
             // updated_atを優先、なければcreated_atを使用
             let formattedDate = '';
             let dateLabel = '';
@@ -390,12 +390,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (dateToDisplay) {
                 try {
                     const date = new Date(dateToDisplay);
-                    // YYYY/MM/DD形式に変換
+                    // YYYY/MM/DD HH:MM形式に変換
                     const year = date.getFullYear();
                     const month = String(date.getMonth() + 1).padStart(2, '0');
                     const day = String(date.getDate()).padStart(2, '0');
-                    formattedDate = `${year}/${month}/${day}`;
-                    dateLabel = meal.updated_at ? '最終更新: ' : '作成日時: ';
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    formattedDate = `${year}/${month}/${day} ${hours}:${minutes}`;
+                    dateLabel = meal.updated_at ? '更新日: ' : '作成日: ';
                 } catch (e) {
                     console.error(`❌ 日付変換エラー [${index}]:`, e);
                     formattedDate = '';
@@ -476,7 +478,6 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedGenre = genre;
         
         document.getElementById('memo').value = meal.メモ || meal.memo || '';
-        document.getElementById('lastAte').value = meal['最後に食べた日'] || meal.lastAte || '';
         document.getElementById('favorite').checked = meal.お気に入り === 'はい' || meal.favorite === true;
         
         // 編集モードに設定
@@ -574,7 +575,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const mealName = document.getElementById('mealName').value.trim();
         const mainIngredient = document.getElementById('mainIngredient').value.trim();
         const memo = document.getElementById('memo').value.trim();
-        const lastAte = document.getElementById('lastAte').value;
         const favorite = document.getElementById('favorite').checked;
         
         // バリデーション
@@ -593,14 +593,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // データオブジェクトを構築
+        // データオブジェクトを構築（日時は自動記録されるため、手動入力は不要）
         const data = {
             料理名: mealName,
             メイン食材: mainIngredient,
             カテゴリー: selectedCategory,
             ジャンル: selectedGenre,
             メモ: memo,
-            '最後に食べた日': lastAte || null,
             お気に入り: favorite ? 'はい' : 'いいえ'
         };
         
@@ -622,10 +621,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(`🔄 IDを数値型に変換: "${editingId}" → ${idToUpdate}`);
                 }
                 
-                // 自動記録: 更新日時を取得
+                // 自動記録: 保存ボタンを押した瞬間の日時を取得（日本時間形式）
                 const now = new Date();
                 const updatedAt = now.toISOString();
+                const updatedAtJP = now.toLocaleString('ja-JP');
                 console.log('📅 更新日時を自動記録:', updatedAt);
+                console.log('📅 更新日時（日本時間）:', updatedAtJP);
                 
                 // supabase.from('meals').update(...).eq('id', editingId) を実行
                 const { data: updateResult, error } = await supabaseClient
@@ -668,12 +669,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('📝 新規保存を実行します');
                 console.log('📝 editingIdが空のため、新規保存として処理します');
                 
-                // 自動記録: 現在の日時を取得
+                // 自動記録: 保存ボタンを押した瞬間の日時を取得（日本時間形式）
                 const now = new Date();
                 const createdAt = now.toISOString();
                 const updatedAt = now.toISOString(); // 新規保存時もupdated_atを設定
+                const createdAtJP = now.toLocaleString('ja-JP');
+                const updatedAtJP = now.toLocaleString('ja-JP');
                 console.log('📅 保存日時を自動記録:', createdAt);
+                console.log('📅 保存日時（日本時間）:', createdAtJP);
                 console.log('📅 更新日時を自動記録:', updatedAt);
+                console.log('📅 更新日時（日本時間）:', updatedAtJP);
                 
                 // supabase.from('meals').insert を実行（updateではない）
                 // created_atとupdated_atを自動でDBに送る
@@ -732,7 +737,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('mealName').value = '';
         document.getElementById('mainIngredient').value = '';
         document.getElementById('memo').value = '';
-        document.getElementById('lastAte').value = '';
         document.getElementById('favorite').checked = false;
         
         // カテゴリーとジャンルの選択をリセット
