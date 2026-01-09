@@ -201,6 +201,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         ...JSON.parse(item.name) 
                     };
                     
+                    // カテゴリーが「魚」の場合は「海鮮」に変換（名称変更の反映）
+                    if (parsedData.カテゴリー === '魚') {
+                        parsedData.カテゴリー = '海鮮';
+                    }
+                    if (parsedData.category === '魚') {
+                        parsedData.category = '海鮮';
+                    }
+                    
                     // 表示用の日付を決定: last_eaten_atを優先、なければupdated_at、それもなければcreated_atを使用
                     const dateToDisplay = parsedData.last_eaten_at || parsedData.updated_at || parsedData.created_at;
                     const dateType = parsedData.last_eaten_at ? 'last_eaten_at' : (parsedData.updated_at ? 'updated_at' : 'created_at');
@@ -239,6 +247,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         name: item.name, 
                         category: item.category 
                     };
+                    
+                    // カテゴリーが「魚」の場合は「海鮮」に変換（名称変更の反映）
+                    if (fallbackData.category === '魚') {
+                        fallbackData.category = '海鮮';
+                    }
                     
                     // last_eaten_at、updated_at、created_atが取得できているか確認（デバッグ用）
                     if (!fallbackData.last_eaten_at && !fallbackData.updated_at && !fallbackData.created_at) {
@@ -434,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 (activeFilter === '牛' && meal.カテゴリー === '牛') ||
                 (activeFilter === '豚' && meal.カテゴリー === '豚') ||
                 (activeFilter === '鶏' && meal.カテゴリー === '鶏') ||
-                (activeFilter === '魚' && meal.カテゴリー === '海鮮') ||
+                (activeFilter === '海鮮' && meal.カテゴリー === '海鮮') ||
                 (activeFilter === '野菜' && meal.カテゴリー === '野菜') ||
                 (activeFilter === 'その他' && meal.カテゴリー === 'その他');
 
@@ -456,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return (activeFilter === '牛' && meal.カテゴリー === '牛') ||
                        (activeFilter === '豚' && meal.カテゴリー === '豚') ||
                        (activeFilter === '鶏' && meal.カテゴリー === '鶏') ||
-                       (activeFilter === '魚' && meal.カテゴリー === '海鮮') ||
+                       (activeFilter === '海鮮' && meal.カテゴリー === '海鮮') ||
                        (activeFilter === '野菜' && meal.カテゴリー === '野菜') ||
                        (activeFilter === 'その他' && meal.カテゴリー === 'その他');
             });
@@ -498,6 +511,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = {
             料理名: mealName
         };
+        
+        // カテゴリーが「魚」の場合は「海鮮」に変換（名称変更の反映）
+        // 将来的にカテゴリーを保存する場合に備えて変換処理を追加
+        if (data.カテゴリー === '魚') {
+            data.カテゴリー = '海鮮';
+        }
+        if (data.category === '魚') {
+            data.category = '海鮮';
+        }
         
         // --- 保存処理のロジック：新規保存と上書き更新を完全に切り分け ---
         try {
