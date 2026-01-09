@@ -201,7 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         ...JSON.parse(item.name) 
                     };
                     
-                    // カテゴリーが「魚」の場合は「海鮮」に変換（名称変更の反映）
+                    // カテゴリーが「魚」の場合は「海鮮」に変換（古いデータの互換性のため）
+                    // 注意: 判定ロジックでは「海鮮」を使用しているため、古い「魚」データを「海鮮」に統一
                     if (parsedData.カテゴリー === '魚') {
                         parsedData.カテゴリー = '海鮮';
                     }
@@ -248,7 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         category: item.category 
                     };
                     
-                    // カテゴリーが「魚」の場合は「海鮮」に変換（名称変更の反映）
+                    // カテゴリーが「魚」の場合は「海鮮」に変換（古いデータの互換性のため）
+                    // 注意: 判定ロジックでは「海鮮」を使用しているため、古い「魚」データを「海鮮」に統一
                     if (fallbackData.category === '魚') {
                         fallbackData.category = '海鮮';
                     }
@@ -512,8 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
             料理名: mealName
         };
         
-        // カテゴリーが「魚」の場合は「海鮮」に変換（名称変更の反映）
-        // 将来的にカテゴリーを保存する場合に備えて変換処理を追加
+        // カテゴリーが「魚」の場合は「海鮮」に変換（古いデータの互換性のため）
+        // 注意: 判定ロジックでは「海鮮」を使用しているため、保存時も「海鮮」に統一
         if (data.カテゴリー === '魚') {
             data.カテゴリー = '海鮮';
         }
