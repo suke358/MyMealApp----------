@@ -102,14 +102,21 @@ document.addEventListener('DOMContentLoaded', () => {
         mealList.addEventListener('click', (e) => {
             const target = e.target;
             if (target.classList.contains('edit-btn')) {
+                // 画面のスクロールを完全に防ぐ
                 e.preventDefault();
                 e.stopPropagation();
+                
                 const index = parseInt(target.getAttribute('data-index'));
                 const mealId = target.getAttribute('data-id');
                 console.log(`✏️ 編集ボタンがクリックされました`);
                 console.log(`✏️ 配列インデックス: ${index}`);
                 console.log(`✏️ データID: ${mealId} (型: ${typeof mealId})`);
+                
+                // 編集処理を実行
                 editMeal(index);
+                
+                // 追加のスクロール防止（念のため）
+                return false;
             } else if (target.classList.contains('delete-btn')) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -304,20 +311,24 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 編集モードに設定
         editingIndex = index;
-        editingId = mealId; // SupabaseのIDを保存
+        editingId = mealId; // SupabaseのIDを保存（これが重要！）
+        console.log(`📝 editingIdを設定しました: ${editingId} (型: ${typeof editingId})`);
         
         // 保存ボタンのテキストを「更新」に変更
         const saveButton = document.getElementById('saveButton');
         if (saveButton) {
             saveButton.textContent = '更新';
             console.log('✅ 保存ボタンを「更新」に変更しました');
+        } else {
+            console.error('❌ 保存ボタンが見つかりません');
         }
         
-        // 画面のスクロールを防ぐ（その場で編集モードに移行）
-        // event.preventDefault()は既にイベントリスナーで実行されているため、
-        // ここでは追加のスクロール処理を行わない
+        // 画面のスクロールを完全に防ぐ
+        // event.preventDefault()は既にイベントリスナーで実行されているが、
+        // 念のためここでも確認
         
         console.log('✅ 編集モードに移行しました');
+        console.log(`✅ 現在のeditingId: ${editingId}`);
     }
 
     // ==========================================
@@ -386,6 +397,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     async function saveMeal() {
         console.log('saveMeal関数が実行されました');
+        console.log(`📝 現在のeditingId: ${editingId} (型: ${typeof editingId})`);
+        console.log(`📝 editingIdが空か: ${editingId === null || editingId === undefined || editingId === ''}`);
         
         // フォームからデータを取得
         const mealName = document.getElementById('mealName').value.trim();
@@ -423,7 +436,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- 修正ポイント：保存・更新の処理を確実に完了させる ---
         try {
-            if (editingIndex !== null && editingId !== null) {
+            // editingIdが空でない場合は更新処理、空の場合は新規保存
+            if (editingId !== null && editingId !== undefined && editingId !== '') {
                 // 更新処理（SupabaseのIDを直接使用）
                 console.log('📝 データベース更新を開始します...');
                 console.log(`📝 更新対象ID: ${editingId} (型: ${typeof editingId})`);
@@ -462,8 +476,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('✅ DB保存成功（更新）');
                 alert("修正しました！");
             } else {
-                // 新規保存
-                console.log('📝 データベース保存を開始します...');
+                // 新規保存（editingIdが空の場合）
+                console.log('📝 新規保存を開始します...');
+                console.log('📝 editingIdが空のため、新規保存として処理します');
+                
                 const { data: insertData, error } = await supabaseClient
                     .from('meals')
                     .insert({ name: JSON.stringify(data) })
@@ -471,17 +487,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (error) {
                     console.error('❌ データベース保存エラー:', error);
+                    console.error('❌ エラーメッセージ:', error.message);
+                    console.error('❌ エラー詳細:', JSON.stringify(error, null, 2));
                     throw error;
                 }
-                console.log('✅ DB保存成功（新規）');
+                
+                if (insertData && insertData.length > 0) {
+                    console.log(`✅ DB保存成功（新規）: ${insertData.length}件のデータが保存されました`);
+                    console.log('✅ 保存されたデータ:', insertData);
+                }
                 alert("保存しました！");
             }
 
-            // 保存成功後にデータを再取得して表示を更新（これが一番確実です）
-            console.log('🔄 データを再取得します...');
+            // 保存・更新成功後にデータを再取得して表示を更新（これが一番確実です）
+            console.log('🔄 データを再取得して画面を更新します...');
             await fetchMeals(); 
 
-            // フォームのリセット（既存のコードのままでOK）
+            // フォームのリセット（editingIdを空に戻し、ボタンを「保存」に戻す）
             resetForm(); 
 
         } catch (err) {
@@ -492,23 +514,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // フォームリセットを関数にまとめるとスッキリします
     function resetForm() {
+        // フォームの値をクリア
         document.getElementById('mealName').value = '';
         document.getElementById('mainIngredient').value = '';
         document.getElementById('memo').value = '';
         document.getElementById('lastAte').value = '';
         document.getElementById('favorite').checked = false;
+        
+        // カテゴリーとジャンルの選択をリセット
         document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
         selectedCategory = '';
         document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
         selectedGenre = '';
+        
+        // 編集モードをリセット（重要！）
         editingIndex = null;
-        editingId = null; // 編集IDもリセット
+        editingId = null; // editingIdを空に戻す（これが重要！）
+        console.log('✅ editingIdをリセットしました（nullに設定）');
         
         // 保存ボタンのテキストを「保存」に戻す
         const saveButton = document.getElementById('saveButton');
         if (saveButton) {
             saveButton.textContent = '保存';
             console.log('✅ 保存ボタンを「保存」に戻しました');
+        } else {
+            console.error('❌ 保存ボタンが見つかりません');
         }
     }
     
