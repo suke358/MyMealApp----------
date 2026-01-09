@@ -176,13 +176,16 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             console.log('🔄 データベースからデータを取得中...');
             // すべての列を取得（id列とcreated_at列を含む）
-            // created_atで降順に並べ替え（最新が上）
+            // created_atで降順に並べ替え（最新が上に来るように）
             const { data, error } = await supabaseClient
                 .from('meals')
                 .select('*')
-                .order('created_at', { ascending: false }); // 最新が上に来るように降順
+                .order('created_at', { ascending: false }); // 最新が上に来るように降順ソート
             
-            if (error) throw error;
+            if (error) {
+                console.error('❌ Supabaseからのデータ取得エラー:', error);
+                throw error;
+            }
 
             console.log(`📊 取得したデータ件数: ${data ? data.length : 0}件`);
 
@@ -197,34 +200,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     // もしnameがJSON形式なら展開、そうでなければそのまま
                     const parsedData = { 
                         id: item.id, 
-                        created_at: item.created_at, // created_atを保持
+                        created_at: item.created_at || null, // created_atを保持（nullの場合はnull）
                         ...JSON.parse(item.name) 
                     };
                     
-                    // 日付をフォーマット
+                    // 日付を日本の読みやすい形式（例: 2024/01/10 12:30）に変換
                     if (parsedData.created_at) {
                         parsedData.formattedDate = formatDateTime(parsedData.created_at);
+                        console.log(`📅 データ[${idx}] 日付変換: ${parsedData.created_at} → ${parsedData.formattedDate}`);
+                    } else {
+                        parsedData.formattedDate = '';
+                        console.warn(`⚠️ データ[${idx}]にcreated_atが存在しません`);
                     }
                     
-                    // IDの確認ログ（最初の3件のみ）
+                    // デバッグログ（最初の3件のみ）
                     if (idx < 3) {
                         console.log(`📝 データ[${idx}]: ID=${parsedData.id}, 日付=${parsedData.formattedDate || 'なし'}, 料理名=${parsedData.料理名 || parsedData.name || 'なし'}`);
                     }
                     return parsedData;
                 } catch (e) {
+                    console.error(`❌ データ[${idx}]のパースエラー:`, e);
                     const fallbackData = { 
                         id: item.id, 
-                        created_at: item.created_at,
+                        created_at: item.created_at || null,
                         name: item.name, 
                         category: item.category 
                     };
                     
-                    // 日付をフォーマット
+                    // 日付を日本の読みやすい形式に変換
                     if (fallbackData.created_at) {
                         fallbackData.formattedDate = formatDateTime(fallbackData.created_at);
+                        console.log(`📅 データ[${idx}] 日付変換（フォールバック）: ${fallbackData.created_at} → ${fallbackData.formattedDate}`);
+                    } else {
+                        fallbackData.formattedDate = '';
                     }
                     
-                    // IDの確認ログ（最初の3件のみ）
+                    // デバッグログ（最初の3件のみ）
                     if (idx < 3) {
                         console.log(`📝 データ[${idx}]: ID=${fallbackData.id}, 日付=${fallbackData.formattedDate || 'なし'}, name=${fallbackData.name || 'なし'}`);
                     }
@@ -238,13 +249,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(`❌ IDが存在しないデータが${idsWithoutId.length}件あります`);
             }
 
-            // 並べ替え: created_atで降順（最新が上）- 既にSupabaseで並べ替え済みだが、念のため
+            // 並べ替え: created_atで降順（最新が上）- Supabaseで既に並べ替え済みだが、念のためクライアント側でもソート
+            console.log('🔄 created_atで降順にソート中（最新が上）...');
             allMeals.sort((a, b) => {
-                const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
-                const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
-                return dateB - dateA; // 降順（新しい順）
+                // created_atがnullの場合は最後に配置
+                if (!a.created_at && !b.created_at) return 0;
+                if (!a.created_at) return 1;
+                if (!b.created_at) return -1;
+                
+                const dateA = new Date(a.created_at);
+                const dateB = new Date(b.created_at);
+                
+                // 降順（新しい順）：dateB - dateA
+                return dateB - dateA;
             });
+            
+            console.log('✅ ソート完了: 最新のデータが一番上に配置されました');
 
+            // 画面に表示
             displayMeals(allMeals);
             console.log('✅ データの読み込みに成功しました（最新順に並べ替え済み）');
         } catch (error) {

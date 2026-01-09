@@ -7,6 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>MyMeal おかず提案ツール</title>
     <link rel="manifest" href="manifest.json">
+    <!-- CSSファイルの読み込み: レスポンシブデザインとモダンなスタイル -->
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
@@ -107,6 +108,12 @@
                 <div id="suggestionArea"></div>
             </div>
 
+            <!-- 履歴リスト: JavaScriptで動的に生成される
+                 各項目には以下の構造が含まれます:
+                 - .meal-date-row: 日付と料理名を並べて表示
+                 - .meal-date: 日付表示用のspan（「2024/01/10 12:30」形式）
+                 - .meal-name: 料理名
+                 - .meal-details: メイン食材、メモ、最後に食べた日などの詳細情報 -->
             <div id="mealsList"></div>
         </div>
     </div>

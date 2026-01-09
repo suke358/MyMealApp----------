@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #f5f7fa;
     min-height: 100vh;
     padding: 20px;
     padding-bottom: 100px;
@@ -20,17 +20,16 @@ body {
 }
 
 h1 {
-    color: white;
+    color: #2c3e50;
     text-align: center;
     font-size: clamp(24px, 5vw, 32px);
     margin-bottom: 12px;
     font-weight: 700;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
 .subtitle {
     text-align: center;
-    color: rgba(255, 255, 255, 0.9);
+    color: #7f8c8d;
     margin-top: -2px;
     margin-bottom: 24px;
     font-size: clamp(12px, 2.5vw, 14px);
@@ -38,11 +37,12 @@ h1 {
 }
 
 .form-section {
-    background: white;
-    border-radius: 20px;
+    background: #ffffff;
+    border-radius: 16px;
     padding: clamp(20px, 4vw, 30px);
     margin-bottom: 25px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e8ecef;
 }
 
 .form-group {
@@ -66,19 +66,20 @@ label {
 
 .category-btn {
     padding: clamp(14px, 3vw, 18px) 12px;
-    border: 3px solid #e0e0e0;
-    border-radius: 15px;
-    background: white;
+    border: 1px solid #d0d7de;
+    border-radius: 12px;
+    background: #ffffff;
     font-size: clamp(14px, 3vw, 18px);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    color: #333;
+    transition: all 0.2s ease;
+    color: #2c3e50;
     min-height: clamp(50px, 8vw, 60px);
     display: flex;
     align-items: center;
     justify-content: center;
     touch-action: manipulation;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .category-btn.active {
@@ -134,19 +135,20 @@ label {
 
 .genre-btn {
     padding: clamp(14px, 3vw, 18px) 12px;
-    border: 3px solid #e0e0e0;
-    border-radius: 15px;
-    background: white;
+    border: 1px solid #d0d7de;
+    border-radius: 12px;
+    background: #ffffff;
     font-size: clamp(14px, 3vw, 18px);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    color: #333;
+    transition: all 0.2s ease;
+    color: #2c3e50;
     min-height: clamp(50px, 8vw, 60px);
     display: flex;
     align-items: center;
     justify-content: center;
     touch-action: manipulation;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .genre-btn.active {
@@ -186,11 +188,12 @@ input[type="date"],
 textarea {
     width: 100%;
     padding: clamp(14px, 3vw, 18px);
-    border: 2px solid #e0e0e0;
-    border-radius: 12px;
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
     font-size: clamp(14px, 3vw, 18px);
     font-family: inherit;
-    transition: border-color 0.3s ease;
+    transition: all 0.2s ease;
+    background: #ffffff;
 }
 
 input[type="text"]:focus,
@@ -198,6 +201,7 @@ input[type="date"]:focus,
 textarea:focus {
     outline: none;
     border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 textarea {
@@ -211,14 +215,19 @@ textarea {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    border-radius: 15px;
+    border-radius: 12px;
     font-size: clamp(16px, 3vw, 20px);
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     min-height: clamp(50px, 8vw, 60px);
     touch-action: manipulation;
+}
+
+.save-btn:hover {
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    transform: translateY(-1px);
 }
 
 .save-btn:active {
@@ -226,10 +235,11 @@ textarea {
 }
 
 .meals-section {
-    background: white;
-    border-radius: 20px;
+    background: #ffffff;
+    border-radius: 16px;
     padding: clamp(20px, 4vw, 30px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e8ecef;
 }
 
 .meals-header {
@@ -274,13 +284,16 @@ textarea {
     width: 100%;
     padding: clamp(12px, 2.5vw, 14px) 40px clamp(12px, 2.5vw, 14px) 16px;
     border-radius: 999px;
-    border: 2px solid #e0e0e0;
+    border: 1px solid #d0d7de;
     font-size: clamp(14px, 2.5vw, 15px);
+    background: #ffffff;
+    transition: all 0.2s ease;
 }
 
 .search-box input:focus {
     outline: none;
     border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .search-icon {
@@ -301,8 +314,8 @@ textarea {
 .filter-chip {
     padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 14px);
     border-radius: 999px;
-    border: 1px solid #e0e0e0;
-    background: #f8f9fa;
+    border: 1px solid #d0d7de;
+    background: #ffffff;
     font-size: clamp(12px, 2vw, 13px);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -310,13 +323,21 @@ textarea {
     min-height: 36px;
     display: flex;
     align-items: center;
+    color: #5a6c7d;
+    font-weight: 500;
+}
+
+.filter-chip:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
 }
 
 .filter-chip.active {
-    background: #ffb347;
-    border-color: #ff9a3c;
+    background: #667eea;
+    border-color: #667eea;
     color: white;
-    box-shadow: 0 3px 10px rgba(255, 154, 60, 0.4);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    font-weight: 600;
 }
 
 .suggestion-wrapper {
@@ -376,23 +397,50 @@ textarea {
     margin-top: 20px;
 }
 
-/* おかず1つずつのカード */
+/* おかず1つずつのカード - モダンなカード型デザイン */
 .meal-item {
     background: #ffffff;
-    padding: clamp(15px, 3vw, 20px);
+    padding: clamp(18px, 3.5vw, 24px);
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    border-left: 5px solid #ff7e5f;
-    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e8ecef;
+    border-left: 4px solid #667eea;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .meal-item:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
     transform: translateY(-2px);
+    border-color: #d0d7de;
+}
+
+.meal-item.beef {
+    border-left-color: #e74c3c;
+}
+
+.meal-item.pork {
+    border-left-color: #f39c12;
+}
+
+.meal-item.chicken {
+    border-left-color: #e67e22;
+}
+
+.meal-item.fish {
+    border-left-color: #3498db;
+}
+
+.meal-item.vegetable {
+    border-left-color: #27ae60;
+}
+
+.meal-item.other {
+    border-left-color: #9b59b6;
 }
 
 .tag-container {
@@ -405,11 +453,12 @@ textarea {
 
 .genre-tag {
     display: inline-block;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 12px;
     font-size: clamp(11px, 2vw, 12px);
     font-weight: 600;
     color: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .genre-tag.japanese {
@@ -434,12 +483,13 @@ textarea {
 
 .category-tag {
     display: inline-block;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 12px;
     font-size: clamp(11px, 2vw, 12px);
     font-weight: 600;
     color: white;
     background: #667eea;
+    box-shadow: 0 1px 3px rgba(102, 126, 234, 0.3);
 }
 
 .meal-header {
@@ -452,10 +502,11 @@ textarea {
 
 .meal-name {
     font-size: clamp(16px, 3.5vw, 20px);
-    font-weight: 700;
-    color: #333;
+    font-weight: 600;
+    color: #2c3e50;
     margin: 0;
     flex: 1;
+    line-height: 1.4;
 }
 
 .meal-details {
@@ -466,20 +517,22 @@ textarea {
 
 .main-ingredient {
     font-size: clamp(13px, 2.5vw, 15px);
-    color: #666;
-    margin: 0;
-}
-
-.memo {
-    font-size: clamp(12px, 2.5vw, 14px);
-    color: #888;
+    color: #5a6c7d;
     margin: 0;
     line-height: 1.5;
 }
 
+.memo {
+    font-size: clamp(12px, 2.5vw, 14px);
+    color: #7f8c8d;
+    margin: 0;
+    line-height: 1.6;
+    padding: 8px 0;
+}
+
 .last-ate {
     font-size: clamp(11px, 2vw, 12px);
-    color: #999;
+    color: #95a5a6;
     margin: 0;
 }
 
@@ -493,13 +546,14 @@ textarea {
 }
 
 .meal-date {
-    font-size: clamp(12px, 2vw, 13px);
-    color: #667eea;
-    font-weight: 600;
-    background: #f0f4ff;
-    padding: 4px 10px;
-    border-radius: 8px;
+    font-size: clamp(11px, 1.8vw, 12px);
+    color: #95a5a6;
+    font-weight: 500;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
     white-space: nowrap;
+    letter-spacing: 0.02em;
 }
 
 .edit-btn, .delete-btn {
