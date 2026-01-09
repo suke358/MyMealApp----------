@@ -176,11 +176,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             console.log('🔄 データベースからデータを取得中...');
             // すべての列を取得（id列、created_at列、updated_at列、last_eaten_at列を含む）
-            // クライアント側でlast_eaten_at優先でソートするため、ここではlast_eaten_atでソート
+            // last_eaten_atで最新順にソート
             const { data, error } = await supabaseClient
                 .from('meals')
                 .select('*')
-                .order('last_eaten_at', { ascending: false, nullsFirst: false }); // last_eaten_atで降順ソート（nullは後ろに）
+                .order('last_eaten_at', { ascending: false }); // last_eaten_atで降順ソート（最新が上）
             
             if (error) {
                 console.error('❌ Supabaseからのデータ取得エラー:', error);
@@ -357,72 +357,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = document.createElement('div');
             item.className = 'meal-item';
             
-            // カテゴリーの絞り込み用に属性をセット
-            const category = (meal.カテゴリー === '魚' ? '海鮮' : meal.カテゴリー) || meal.category || 'その他';
-            item.setAttribute('data-category', category);
-
-            // お気に入りや日付の表示判定
-            const favoriteIcon = (meal.お気に入り === 'はい' || meal.favorite) ? '⭐' : '';
-            const lastAteValue = meal['最後に食べた日'] || meal.lastAte;
-            const lastAteText = lastAteValue ? `<small>最後に食べた日: ${lastAteValue}</small>` : '';
-            
-            // 料理名などのキー名がズレていても表示されるように調整
+            // 料理名の取得
             const name = meal.料理名 || meal.name || '名前なし';
-            const ingredient = meal.メイン食材 || meal.mainIngredient || '-';
-            const memo = meal.メモ || meal.memo || '';
-            const genreValue = meal.ジャンル || meal.genre || '';
-            const genre = genreValue === 'その他' ? '麺類' : genreValue;
-            const genreClass = genre === '和食' ? 'japanese' : genre === '洋食' ? 'western' : genre === '中華' ? 'chinese' : genre === '麺類' ? 'noodle' : 'other';
-
-            // Supabaseのidを確実に取得（数値型または文字列型）
-            const mealId = meal.id;
-            if (!mealId) {
-                console.error('❌ データにIDが存在しません:', meal);
-            }
             
             // 日付の取得とフォーマット（日本形式に変換: toLocaleDateString('ja-JP')を使用）
-            // last_eaten_atを優先、なければupdated_at、それもなければcreated_atを使用
             let formattedDate = '';
-            let dateLabel = '';
-            let dateToDisplay = null;
-            
-            // 表示用の日付を決定: last_eaten_atを優先、なければupdated_at、それもなければcreated_atを使用
-            dateToDisplay = meal.last_eaten_at || meal.updated_at || meal.created_at;
+            const dateToDisplay = meal.last_eaten_at;
             
             if (dateToDisplay) {
                 try {
-                    // 日本形式に変換（toLocaleDateString('ja-JP')を使用）
+                    // 取得したlast_eaten_atを日本形式に変換
                     formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
-                    dateLabel = '最終更新: ';
                 } catch (e) {
                     console.error(`❌ 日付変換エラー [${index}]:`, e);
                     formattedDate = '';
                 }
             }
             
-            // 日付表示用のテキストを生成（last-updated用）
-            const updateTimeText = formattedDate ? `${dateLabel}${formattedDate}` : '';
-            console.log(`📅 データ[${index}] 日付表示: ${updateTimeText || '日付なし'}`);
+            // 日付表示用のテキストを生成（YYYY/MM/DD形式）
+            const dateDisplayText = formattedDate || '';
             
             item.innerHTML = `
-                <div class="tag-container">
-                    ${genre ? `<span class="genre-tag ${genreClass}">${genre}</span>` : ''}
-                    <span class="category-tag">${category}</span>
-                </div>
-                <div class="meal-header">
-                    <div class="meal-date-row">
-                        <h4 class="meal-name">${name} ${favoriteIcon}</h4>
-                        ${updateTimeText ? `<span class="last-updated">${updateTimeText}</span>` : ''}
-                    </div>
-                    <div>
-                        <button class="edit-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
-                        <button class="delete-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
-                    </div>
-                </div>
-                <div class="meal-details">
-                    <p class="main-ingredient"><strong>メイン食材:</strong> ${ingredient}</p>
-                    ${memo ? `<p class="memo">${memo}</p>` : ''}
-                    ${lastAteText ? `<p class="last-ate">${lastAteText}</p>` : ''}
+                <div class="meal-card-content">
+                    <span class="meal-name">${name}</span>
+                    ${dateDisplayText ? `<span class="meal-date">${dateDisplayText}</span>` : ''}
                 </div>
             `;
             mealList.appendChild(item);
@@ -567,36 +525,18 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`📝 現在のeditingId: ${editingId} (型: ${typeof editingId})`);
         console.log(`📝 editingIdが空か: ${editingId === null || editingId === undefined || editingId === ''}`);
         
-        // フォームからデータを取得
+        // フォームからデータを取得（料理名のみ）
         const mealName = document.getElementById('mealName').value.trim();
-        const mainIngredient = document.getElementById('mainIngredient').value.trim();
-        const memo = document.getElementById('memo').value.trim();
-        const favorite = document.getElementById('favorite').checked;
         
         // バリデーション
         if (!mealName) {
-            alert('食事名を入力してください');
-            return;
-        }
-        
-        if (!selectedCategory) {
-            alert('カテゴリーを選択してください');
-            return;
-        }
-        
-        if (!selectedGenre) {
-            alert('ジャンルを選択してください');
+            alert('料理名を入力してください');
             return;
         }
         
         // データオブジェクトを構築（日時は自動記録されるため、手動入力は不要）
         const data = {
-            料理名: mealName,
-            メイン食材: mainIngredient,
-            カテゴリー: selectedCategory,
-            ジャンル: selectedGenre,
-            メモ: memo,
-            お気に入り: favorite ? 'はい' : 'いいえ'
+            料理名: mealName
         };
         
         // --- 保存処理のロジック：新規保存と上書き更新を完全に切り分け ---

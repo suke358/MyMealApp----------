@@ -410,10 +410,16 @@ textarea {
     border: none;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
     margin-bottom: 12px;
+}
+
+/* カード内のコンテンツ - 料理名と日付を左右に配置 */
+.meal-card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
 }
 
 .meal-item:hover {
@@ -503,30 +509,27 @@ textarea {
     position: relative;
 }
 
-.meal-name {
+/* カード内の料理名 */
+.meal-card-content .meal-name {
     font-size: clamp(16px, 3.5vw, 20px);
     font-weight: 600;
     color: #2c3e50;
     margin: 0;
     flex: 1;
     line-height: 1.4;
-    position: relative;
-    display: inline-block;
-    padding-right: 0;
 }
 
-/* 自動記録された日時のスタイル - 料理名の横に表示（プロっぽいログ風デザイン） */
-.last-updated {
-    font-size: clamp(10px, 1.6vw, 11px);
+/* カード内の日付 - 右側に小さなグレー文字で表示 */
+.meal-card-content .meal-date {
+    font-size: clamp(11px, 1.8vw, 12px);
     color: #999;
     font-weight: 400;
     margin: 0;
     padding: 0;
-    letter-spacing: 0.03em;
-    line-height: 1.5;
-    display: inline-block;
-    opacity: 0.85;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
     white-space: nowrap;
+    opacity: 0.8;
 }
 
 .meal-details {
@@ -713,15 +716,20 @@ textarea {
         width: 100%;
         padding: 12px;
         border-radius: 12px;
-        gap: 6px;
         margin-bottom: 10px;
     }
     
-    .last-updated {
-        font-size: 10px;
-        margin-top: 0;
-        color: #999;
-        opacity: 0.85;
+    .meal-card-content {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .meal-card-content .meal-name {
+        font-size: clamp(15px, 3.5vw, 18px);
+    }
+    
+    .meal-card-content .meal-date {
+        font-size: 11px;
     }
     
     .meal-header {
