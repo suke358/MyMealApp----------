@@ -201,14 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ...JSON.parse(item.name) 
                     };
                     
-                    // カテゴリーが「魚」の場合は「海鮮」に変換（古いデータの互換性のため）
-                    // 注意: 判定ロジックでは「海鮮」を使用しているため、古い「魚」データを「海鮮」に統一
-                    if (parsedData.カテゴリー === '魚') {
-                        parsedData.カテゴリー = '海鮮';
-                    }
-                    if (parsedData.category === '魚') {
-                        parsedData.category = '海鮮';
-                    }
+                    // カテゴリーは「海鮮」として統一されています
                     
                     // 表示用の日付を決定: last_eaten_atを優先、なければupdated_at、それもなければcreated_atを使用
                     const dateToDisplay = parsedData.last_eaten_at || parsedData.updated_at || parsedData.created_at;
@@ -249,11 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         category: item.category 
                     };
                     
-                    // カテゴリーが「魚」の場合は「海鮮」に変換（古いデータの互換性のため）
-                    // 注意: 判定ロジックでは「海鮮」を使用しているため、古い「魚」データを「海鮮」に統一
-                    if (fallbackData.category === '魚') {
-                        fallbackData.category = '海鮮';
-                    }
+                    // カテゴリーは「海鮮」として統一されています
                     
                     // last_eaten_at、updated_at、created_atが取得できているか確認（デバッグ用）
                     if (!fallbackData.last_eaten_at && !fallbackData.updated_at && !fallbackData.created_at) {
@@ -514,14 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
             料理名: mealName
         };
         
-        // カテゴリーが「魚」の場合は「海鮮」に変換（古いデータの互換性のため）
-        // 注意: 判定ロジックでは「海鮮」を使用しているため、保存時も「海鮮」に統一
-        if (data.カテゴリー === '魚') {
-            data.カテゴリー = '海鮮';
-        }
-        if (data.category === '魚') {
-            data.category = '海鮮';
-        }
+        // カテゴリーは「海鮮」として統一されています
         
         // --- 保存処理のロジック：新規保存と上書き更新を完全に切り分け ---
         try {
