@@ -9,8 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // グローバル変数
     // ==========================================
-    let selectedCategory = '';
-    let selectedGenre = '';
     let editingIndex = null;
     let editingId = null; // 編集対象のSupabase ID
     let allMeals = [];
@@ -18,24 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 初期化処理
     // ==========================================
-    // カテゴリーボタンのイベントリスナー
-    document.querySelectorAll('.category-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedCategory = this.dataset.category;
-        });
-    });
-
-    // ジャンルボタンのイベントリスナー
-    document.querySelectorAll('.genre-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedGenre = this.dataset.genre;
-        });
-    });
-
     // 保存ボタンのイベントリスナー
     const saveBtn = document.getElementById('saveButton');
     if (!saveBtn) {
@@ -360,14 +340,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // 料理名の取得
             const name = meal.料理名 || meal.name || '名前なし';
             
-            // 日付の取得とフォーマット（日本形式に変換: toLocaleDateString('ja-JP')を使用）
+            // 日付の取得とフォーマット（YYYY/MM/DD形式に変換）
             let formattedDate = '';
             const dateToDisplay = meal.last_eaten_at;
             
             if (dateToDisplay) {
                 try {
-                    // 取得したlast_eaten_atを日本形式に変換
-                    formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                    const date = new Date(dateToDisplay);
+                    // YYYY/MM/DD形式に変換
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    formattedDate = `${year}/${month}/${day}`;
                 } catch (e) {
                     console.error(`❌ 日付変換エラー [${index}]:`, e);
                     formattedDate = '';
@@ -407,32 +391,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         console.log(`📝 編集対象のID: ${mealId} (型: ${typeof mealId})`);
         
-        // フォームに値をセット
+        // フォームに値をセット（料理名のみ）
         document.getElementById('mealName').value = meal.料理名 || meal.name || '';
-        document.getElementById('mainIngredient').value = meal.メイン食材 || meal.mainIngredient || '';
-        
-        // カテゴリーボタンの選択状態をリセットし、該当するものをアクティブに
-        const category = meal.カテゴリー || meal.category || '';
-        document.querySelectorAll('.category-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.category === category) {
-                btn.classList.add('active');
-            }
-        });
-        selectedCategory = category;
-        
-        // ジャンルボタンの選択状態をリセットし、該当するものをアクティブに
-        const genre = meal.ジャンル || meal.genre || '';
-        document.querySelectorAll('.genre-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.genre === genre) {
-                btn.classList.add('active');
-            }
-        });
-        selectedGenre = genre;
-        
-        document.getElementById('memo').value = meal.メモ || meal.memo || '';
-        document.getElementById('favorite').checked = meal.お気に入り === 'はい' || meal.favorite === true;
         
         // 編集モードに設定
         editingIndex = index;
@@ -669,17 +629,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // フォームリセットを関数にまとめるとスッキリします
     function resetForm() {
-        // フォームの値をクリア
+        // フォームの値をクリア（料理名のみ）
         document.getElementById('mealName').value = '';
-        document.getElementById('mainIngredient').value = '';
-        document.getElementById('memo').value = '';
-        document.getElementById('favorite').checked = false;
-        
-        // カテゴリーとジャンルの選択をリセット
-        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-        selectedCategory = '';
-        document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
-        selectedGenre = '';
         
         // 編集モードをリセット（重要！）
         editingIndex = null;
