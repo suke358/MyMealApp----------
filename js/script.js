@@ -175,12 +175,12 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchMeals() {
         try {
             console.log('🔄 データベースからデータを取得中...');
-            // すべての列を取得（id列、created_at列、updated_at列を含む）
-            // クライアント側でupdated_at優先でソートするため、ここではupdated_atでソート
+            // すべての列を取得（id列、created_at列、updated_at列、last_eaten_at列を含む）
+            // クライアント側でlast_eaten_at優先でソートするため、ここではlast_eaten_atでソート
             const { data, error } = await supabaseClient
                 .from('meals')
                 .select('*')
-                .order('updated_at', { ascending: false, nullsFirst: false }); // updated_atで降順ソート（nullは後ろに）
+                .order('last_eaten_at', { ascending: false, nullsFirst: false }); // last_eaten_atで降順ソート（nullは後ろに）
             
             if (error) {
                 console.error('❌ Supabaseからのデータ取得エラー:', error);
@@ -217,17 +217,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         id: item.id, 
                         created_at: item.created_at || null, // created_atを保持（nullの場合はnull）
                         updated_at: item.updated_at || null, // updated_atを保持（nullの場合はnull）
+                        last_eaten_at: item.last_eaten_at || null, // last_eaten_atを保持（nullの場合はnull）
                         ...JSON.parse(item.name) 
                     };
                     
-                    // 表示用の日付を決定: updated_atを優先、なければcreated_atを使用
-                    const dateToDisplay = parsedData.updated_at || parsedData.created_at;
-                    const dateType = parsedData.updated_at ? 'updated_at' : 'created_at';
+                    // 表示用の日付を決定: last_eaten_atを優先、なければupdated_at、それもなければcreated_atを使用
+                    const dateToDisplay = parsedData.last_eaten_at || parsedData.updated_at || parsedData.created_at;
+                    const dateType = parsedData.last_eaten_at ? 'last_eaten_at' : (parsedData.updated_at ? 'updated_at' : 'created_at');
                     
-                    // 日付を日本時間に変換（toLocaleString('ja-JP')を使用）
+                    // 日付を日本形式に変換（toLocaleDateString('ja-JP')を使用）
                     if (dateToDisplay) {
                         try {
-                            parsedData.formattedDate = new Date(dateToDisplay).toLocaleString('ja-JP');
+                            parsedData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
                             parsedData.displayDateType = dateType; // 表示に使用した日付の種類を記録
                             if (idx < 3) {
                                 console.log(`📅 データ[${idx}] 日付変換 (${dateType}): ${dateToDisplay} → ${parsedData.formattedDate}`);
@@ -240,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         parsedData.formattedDate = '';
                         parsedData.displayDateType = null;
-                        console.warn(`⚠️ データ[${idx}]にupdated_atもcreated_atも存在しません。ID: ${parsedData.id}, 料理名: ${parsedData.料理名 || parsedData.name || 'なし'}`);
+                        console.warn(`⚠️ データ[${idx}]にlast_eaten_atもupdated_atもcreated_atも存在しません。ID: ${parsedData.id}, 料理名: ${parsedData.料理名 || parsedData.name || 'なし'}`);
                     }
                     
                     // デバッグログ（最初の3件のみ）
@@ -254,23 +255,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         id: item.id, 
                         created_at: item.created_at || null,
                         updated_at: item.updated_at || null,
+                        last_eaten_at: item.last_eaten_at || null,
                         name: item.name, 
                         category: item.category 
                     };
                     
-                    // updated_atとcreated_atが取得できているか確認（デバッグ用）
-                    if (!fallbackData.updated_at && !fallbackData.created_at) {
-                        console.warn(`⚠️ データ[${idx}]（フォールバック）にupdated_atもcreated_atも存在しません。ID: ${fallbackData.id}`);
+                    // last_eaten_at、updated_at、created_atが取得できているか確認（デバッグ用）
+                    if (!fallbackData.last_eaten_at && !fallbackData.updated_at && !fallbackData.created_at) {
+                        console.warn(`⚠️ データ[${idx}]（フォールバック）にlast_eaten_atもupdated_atもcreated_atも存在しません。ID: ${fallbackData.id}`);
                     }
                     
-                    // 表示用の日付を決定: updated_atを優先、なければcreated_atを使用
-                    const dateToDisplay = fallbackData.updated_at || fallbackData.created_at;
-                    const dateType = fallbackData.updated_at ? 'updated_at' : 'created_at';
+                    // 表示用の日付を決定: last_eaten_atを優先、なければupdated_at、それもなければcreated_atを使用
+                    const dateToDisplay = fallbackData.last_eaten_at || fallbackData.updated_at || fallbackData.created_at;
+                    const dateType = fallbackData.last_eaten_at ? 'last_eaten_at' : (fallbackData.updated_at ? 'updated_at' : 'created_at');
                     
-                    // 日付を日本時間に変換（toLocaleString('ja-JP')を使用）
+                    // 日付を日本形式に変換（toLocaleDateString('ja-JP')を使用）
                     if (dateToDisplay) {
                         try {
-                            fallbackData.formattedDate = new Date(dateToDisplay).toLocaleString('ja-JP');
+                            fallbackData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
                             fallbackData.displayDateType = dateType; // 表示に使用した日付の種類を記録
                             if (idx < 3) {
                                 console.log(`📅 データ[${idx}] 日付変換（フォールバック）(${dateType}): ${dateToDisplay} → ${fallbackData.formattedDate}`);
@@ -283,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         fallbackData.formattedDate = '';
                         fallbackData.displayDateType = null;
-                        console.warn(`⚠️ データ[${idx}]（フォールバック）にupdated_atもcreated_atも存在しません`);
+                        console.warn(`⚠️ データ[${idx}]（フォールバック）にlast_eaten_atもupdated_atもcreated_atも存在しません`);
                     }
                     
                     // デバッグログ（最初の3件のみ）
@@ -300,20 +302,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(`❌ IDが存在しないデータが${idsWithoutId.length}件あります`);
             }
             
-            // すべてのデータのupdated_atとcreated_atを確認（デバッグ用）
-            const mealsWithoutUpdatedAt = allMeals.filter(meal => !meal.updated_at && !meal.created_at);
-            if (mealsWithoutUpdatedAt.length > 0) {
-                console.warn(`⚠️ updated_atもcreated_atも存在しないデータが${mealsWithoutUpdatedAt.length}件あります`);
-                console.warn('⚠️ 日付が存在しないデータのID:', mealsWithoutUpdatedAt.map(m => m.id));
+            // すべてのデータのlast_eaten_at、updated_at、created_atを確認（デバッグ用）
+            const mealsWithoutDate = allMeals.filter(meal => !meal.last_eaten_at && !meal.updated_at && !meal.created_at);
+            if (mealsWithoutDate.length > 0) {
+                console.warn(`⚠️ last_eaten_atもupdated_atもcreated_atも存在しないデータが${mealsWithoutDate.length}件あります`);
+                console.warn('⚠️ 日付が存在しないデータのID:', mealsWithoutDate.map(m => m.id));
             }
 
-            // 並べ替え: updated_atを優先、なければcreated_atで降順（最新が上）
+            // 並べ替え: last_eaten_atを優先、なければupdated_at、それもなければcreated_atで降順（最新が上）
             // Supabaseで既に並べ替え済みだが、念のためクライアント側でもソート
-            console.log('🔄 updated_at優先で降順にソート中（最新が上）...');
+            console.log('🔄 last_eaten_at優先で降順にソート中（最新が上）...');
             allMeals.sort((a, b) => {
-                // 比較用の日付を取得: updated_atを優先、なければcreated_at
-                const dateA = a.updated_at || a.created_at;
-                const dateB = b.updated_at || b.created_at;
+                // 比較用の日付を取得: last_eaten_atを優先、なければupdated_at、それもなければcreated_at
+                const dateA = a.last_eaten_at || a.updated_at || a.created_at;
+                const dateB = b.last_eaten_at || b.updated_at || b.created_at;
                 
                 // 両方ともnullの場合は順序を変えない
                 if (!dateA && !dateB) return 0;
@@ -378,33 +380,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('❌ データにIDが存在しません:', meal);
             }
             
-            // 日付の取得とフォーマット（日本時間に変換: YYYY/MM/DD HH:MM形式）
-            // updated_atを優先、なければcreated_atを使用
+            // 日付の取得とフォーマット（日本形式に変換: toLocaleDateString('ja-JP')を使用）
+            // last_eaten_atを優先、なければupdated_at、それもなければcreated_atを使用
             let formattedDate = '';
             let dateLabel = '';
             let dateToDisplay = null;
             
-            // 表示用の日付を決定: updated_atを優先、なければcreated_atを使用
-            dateToDisplay = meal.updated_at || meal.created_at;
+            // 表示用の日付を決定: last_eaten_atを優先、なければupdated_at、それもなければcreated_atを使用
+            dateToDisplay = meal.last_eaten_at || meal.updated_at || meal.created_at;
             
             if (dateToDisplay) {
                 try {
-                    const date = new Date(dateToDisplay);
-                    // YYYY/MM/DD HH:MM形式に変換
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const hours = String(date.getHours()).padStart(2, '0');
-                    const minutes = String(date.getMinutes()).padStart(2, '0');
-                    formattedDate = `${year}/${month}/${day} ${hours}:${minutes}`;
-                    dateLabel = meal.updated_at ? '更新日: ' : '作成日: ';
+                    // 日本形式に変換（toLocaleDateString('ja-JP')を使用）
+                    formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                    dateLabel = '最終更新: ';
                 } catch (e) {
                     console.error(`❌ 日付変換エラー [${index}]:`, e);
                     formattedDate = '';
                 }
             }
             
-            // 日付表示用のテキストを生成（update-time用）
+            // 日付表示用のテキストを生成（last-updated用）
             const updateTimeText = formattedDate ? `${dateLabel}${formattedDate}` : '';
             console.log(`📅 データ[${index}] 日付表示: ${updateTimeText || '日付なし'}`);
             
@@ -416,13 +412,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="meal-header">
                     <div class="meal-date-row">
                         <h4 class="meal-name">${name} ${favoriteIcon}</h4>
+                        ${updateTimeText ? `<span class="last-updated">${updateTimeText}</span>` : ''}
                     </div>
                     <div>
                         <button class="edit-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
                         <button class="delete-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
                     </div>
                 </div>
-                ${updateTimeText ? `<div class="update-time">${updateTimeText}</div>` : ''}
                 <div class="meal-details">
                     <p class="main-ingredient"><strong>メイン食材:</strong> ${ingredient}</p>
                     ${memo ? `<p class="memo">${memo}</p>` : ''}
@@ -621,19 +617,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(`🔄 IDを数値型に変換: "${editingId}" → ${idToUpdate}`);
                 }
                 
-                // 自動記録: 保存ボタンを押した瞬間の日時を取得（日本時間形式）
+                // 自動記録: 保存ボタンを押した瞬間の日時を取得（ISO形式）
                 const now = new Date();
                 const updatedAt = now.toISOString();
-                const updatedAtJP = now.toLocaleString('ja-JP');
+                const lastEatenAt = now.toISOString(); // 最後に食べた日時を自動記録
                 console.log('📅 更新日時を自動記録:', updatedAt);
-                console.log('📅 更新日時（日本時間）:', updatedAtJP);
+                console.log('📅 最後に食べた日時を自動記録:', lastEatenAt);
                 
                 // supabase.from('meals').update(...).eq('id', editingId) を実行
                 const { data: updateResult, error } = await supabaseClient
                     .from('meals')
                     .update({ 
                         name: JSON.stringify(data),
-                        updated_at: updatedAt // 更新日時を自動記録
+                        updated_at: updatedAt, // 更新日時を自動記録
+                        last_eaten_at: lastEatenAt // 最後に食べた日時を自動記録
                     })
                     .eq('id', idToUpdate) // 正しいターゲット指定：今編集しているデータだけを書き換え
                     .select(); // 更新されたデータを返す
@@ -669,25 +666,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('📝 新規保存を実行します');
                 console.log('📝 editingIdが空のため、新規保存として処理します');
                 
-                // 自動記録: 保存ボタンを押した瞬間の日時を取得（日本時間形式）
+                // 自動記録: 保存ボタンを押した瞬間の日時を取得（ISO形式）
                 const now = new Date();
                 const createdAt = now.toISOString();
                 const updatedAt = now.toISOString(); // 新規保存時もupdated_atを設定
-                const createdAtJP = now.toLocaleString('ja-JP');
-                const updatedAtJP = now.toLocaleString('ja-JP');
+                const lastEatenAt = now.toISOString(); // 最後に食べた日時を自動記録
                 console.log('📅 保存日時を自動記録:', createdAt);
-                console.log('📅 保存日時（日本時間）:', createdAtJP);
                 console.log('📅 更新日時を自動記録:', updatedAt);
-                console.log('📅 更新日時（日本時間）:', updatedAtJP);
+                console.log('📅 最後に食べた日時を自動記録:', lastEatenAt);
                 
                 // supabase.from('meals').insert を実行（updateではない）
-                // created_atとupdated_atを自動でDBに送る
+                // created_at、updated_at、last_eaten_atを自動でDBに送る
                 const { data: insertData, error } = await supabaseClient
                     .from('meals')
                     .insert({ 
                         name: JSON.stringify(data),
                         created_at: createdAt,
-                        updated_at: updatedAt // 新規保存時もupdated_atを設定
+                        updated_at: updatedAt, // 新規保存時もupdated_atを設定
+                        last_eaten_at: lastEatenAt // 最後に食べた日時を自動記録
                     })
                     .select();
                 

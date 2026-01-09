@@ -404,7 +404,7 @@ textarea {
 /* おかず1つずつのカード - プロが作った便利ツールのようなモダンなカード型デザイン */
 .meal-item {
     background: #ffffff;
-    padding: clamp(16px, 3vw, 20px);
+    padding: clamp(14px, 2.8vw, 18px);
     border-radius: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
     border: none;
@@ -412,8 +412,8 @@ textarea {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 16px;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
 .meal-item:hover {
@@ -499,7 +499,7 @@ textarea {
     justify-content: space-between;
     align-items: flex-start;
     gap: 10px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     position: relative;
 }
 
@@ -515,15 +515,18 @@ textarea {
     padding-right: 0;
 }
 
-/* 自動記録された日時のスタイル - 料理名のすぐ下に表示 */
-.update-time {
-    font-size: clamp(11px, 1.8vw, 12px);
-    color: #666;
+/* 自動記録された日時のスタイル - 料理名の横に表示（プロっぽいログ風デザイン） */
+.last-updated {
+    font-size: clamp(10px, 1.6vw, 11px);
+    color: #999;
     font-weight: 400;
-    margin: 4px 0 0 0;
+    margin: 0;
     padding: 0;
-    letter-spacing: 0.02em;
-    line-height: 1.4;
+    letter-spacing: 0.03em;
+    line-height: 1.5;
+    display: inline-block;
+    opacity: 0.85;
+    white-space: nowrap;
 }
 
 .meal-details {
@@ -553,15 +556,16 @@ textarea {
     margin: 0;
 }
 
-/* 日付と料理名を並べて表示 - 日付は料理名の左側に小さめのグレー文字で */
+/* 日付と料理名を並べて表示 - 料理名と日時を横並びに */
 .meal-date-row {
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 8px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
     flex-wrap: wrap;
     position: relative;
     width: 100%;
+    flex: 1;
 }
 
 .meal-date {
@@ -707,14 +711,26 @@ textarea {
     
     .meal-item {
         width: 100%;
-        padding: 14px;
+        padding: 12px;
         border-radius: 12px;
+        gap: 6px;
+        margin-bottom: 10px;
     }
     
-    .update-time {
-        font-size: 11px;
-        margin-top: 3px;
-        color: #666;
+    .last-updated {
+        font-size: 10px;
+        margin-top: 0;
+        color: #999;
+        opacity: 0.85;
+    }
+    
+    .meal-header {
+        margin-bottom: 4px;
+    }
+    
+    .meal-date-row {
+        gap: 8px;
+        flex-wrap: wrap;
     }
     
     .category-buttons {
