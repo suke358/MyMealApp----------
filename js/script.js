@@ -189,12 +189,11 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchMeals() {
         try {
             console.log('🔄 データベースからデータを取得中...');
-            // すべての列を取得（id列、created_at列、updated_at列、last_eaten_at列を含む）
-            // last_eaten_atで最新順にソート
+            // name列のみを取得（Supabaseのテーブルにはname列しかない）
             const { data, error } = await supabaseClient
                 .from('meals')
-                .select('*')
-                .order('last_eaten_at', { ascending: false }); // last_eaten_atで降順ソート（最新が上）
+                .select('id, name, created_at, updated_at')
+                .order('updated_at', { ascending: false }); // updated_atで降順ソート（最新が上）
             
             if (error) {
                 console.error('❌ Supabaseからのデータ取得エラー:', error);
@@ -226,26 +225,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 try {
-                    // もしnameがJSON形式なら展開、そうでなければそのまま
+                    // name列をJSONパースしてデータを取得
+                    const nameData = JSON.parse(item.name || '{}');
+                    
+                    // パースしたデータを統合
                     const parsedData = { 
                         id: item.id, 
-                        created_at: item.created_at || null, // created_atを保持（nullの場合はnull）
-                        updated_at: item.updated_at || null, // updated_atを保持（nullの場合はnull）
-                        last_eaten_at: item.last_eaten_at || null, // last_eaten_atを保持（nullの場合はnull）
-                        ...JSON.parse(item.name) 
+                        created_at: item.created_at || null,
+                        updated_at: item.updated_at || null,
+                        ...nameData
                     };
                     
-                    // カテゴリーは「海鮮」として統一されています
+                    // 「最後に食べた日」を取得（name列のJSONオブジェクト内から）
+                    const lastEatenDate = parsedData['最後に食べた日'] || null;
                     
-                    // 表示用の日付を決定: last_eaten_atを優先、なければupdated_at、それもなければcreated_atを使用
-                    const dateToDisplay = parsedData.last_eaten_at || parsedData.updated_at || parsedData.created_at;
-                    const dateType = parsedData.last_eaten_at ? 'last_eaten_at' : (parsedData.updated_at ? 'updated_at' : 'created_at');
+                    // 表示用の日付を決定: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_atを使用
+                    const dateToDisplay = lastEatenDate || parsedData.updated_at || parsedData.created_at;
+                    const dateType = lastEatenDate ? '最後に食べた日' : (parsedData.updated_at ? 'updated_at' : 'created_at');
                     
-                    // 日付を日本形式に変換（toLocaleDateString('ja-JP')を使用）
+                    // 日付を日本形式に変換（YYYY/MM/DD形式）
                     if (dateToDisplay) {
                         try {
-                            parsedData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
-                            parsedData.displayDateType = dateType; // 表示に使用した日付の種類を記録
+                            // 「最後に食べた日」はYYYY-MM-DD形式なので、そのまま使用
+                            if (lastEatenDate) {
+                                const [year, month, day] = lastEatenDate.split('-');
+                                parsedData.formattedDate = `${year}/${month}/${day}`;
+                            } else {
+                                // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換
+                                parsedData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                            }
+                            parsedData.displayDateType = dateType;
+                            parsedData.last_eaten_at = lastEatenDate; // 表示用に保持
+                            
                             if (idx < 3) {
                                 console.log(`📅 データ[${idx}] 日付変換 (${dateType}): ${dateToDisplay} → ${parsedData.formattedDate}`);
                             }
@@ -257,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         parsedData.formattedDate = '';
                         parsedData.displayDateType = null;
-                        console.warn(`⚠️ データ[${idx}]にlast_eaten_atもupdated_atもcreated_atも存在しません。ID: ${parsedData.id}, 料理名: ${parsedData.料理名 || parsedData.name || 'なし'}`);
+                        console.warn(`⚠️ データ[${idx}]に「最後に食べた日」もupdated_atもcreated_atも存在しません。ID: ${parsedData.id}, 料理名: ${parsedData.料理名 || parsedData.name || 'なし'}`);
                     }
                     
                     // デバッグログ（最初の3件のみ）
@@ -320,20 +331,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(`❌ IDが存在しないデータが${idsWithoutId.length}件あります`);
             }
             
-            // すべてのデータのlast_eaten_at、updated_at、created_atを確認（デバッグ用）
-            const mealsWithoutDate = allMeals.filter(meal => !meal.last_eaten_at && !meal.updated_at && !meal.created_at);
+            // すべてのデータの「最後に食べた日」、updated_at、created_atを確認（デバッグ用）
+            const mealsWithoutDate = allMeals.filter(meal => !meal['最後に食べた日'] && !meal.last_eaten_at && !meal.updated_at && !meal.created_at);
             if (mealsWithoutDate.length > 0) {
-                console.warn(`⚠️ last_eaten_atもupdated_atもcreated_atも存在しないデータが${mealsWithoutDate.length}件あります`);
+                console.warn(`⚠️ 「最後に食べた日」もupdated_atもcreated_atも存在しないデータが${mealsWithoutDate.length}件あります`);
                 console.warn('⚠️ 日付が存在しないデータのID:', mealsWithoutDate.map(m => m.id));
             }
 
-            // 並べ替え: last_eaten_atを優先、なければupdated_at、それもなければcreated_atで降順（最新が上）
+            // 並べ替え: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_atで降順（最新が上）
             // Supabaseで既に並べ替え済みだが、念のためクライアント側でもソート
-            console.log('🔄 last_eaten_at優先で降順にソート中（最新が上）...');
+            console.log('🔄 「最後に食べた日」優先で降順にソート中（最新が上）...');
             allMeals.sort((a, b) => {
-                // 比較用の日付を取得: last_eaten_atを優先、なければupdated_at、それもなければcreated_at
-                const dateA = a.last_eaten_at || a.updated_at || a.created_at;
-                const dateB = b.last_eaten_at || b.updated_at || b.created_at;
+                // 比較用の日付を取得: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_at
+                const dateA = a['最後に食べた日'] || a.last_eaten_at || a.updated_at || a.created_at;
+                const dateB = b['最後に食べた日'] || b.last_eaten_at || b.updated_at || b.created_at;
                 
                 // 両方ともnullの場合は順序を変えない
                 if (!dateA && !dateB) return 0;
@@ -401,25 +412,32 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // 日付の取得とフォーマット（YYYY/MM/DD形式に変換）
-            let formattedDate = '';
-            const dateToDisplay = meal.last_eaten_at;
+            // 「最後に食べた日」を優先、なければformattedDateを使用
+            let dateDisplayText = '';
+            const lastEatenDate = meal['最後に食べた日'] || meal.last_eaten_at;
             
-            if (dateToDisplay) {
+            if (lastEatenDate) {
                 try {
-                    const date = new Date(dateToDisplay);
-                    // YYYY/MM/DD形式に変換
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    formattedDate = `${year}/${month}/${day}`;
+                    // 「最後に食べた日」はYYYY-MM-DD形式なので、そのまま変換
+                    if (typeof lastEatenDate === 'string' && lastEatenDate.includes('-')) {
+                        const [year, month, day] = lastEatenDate.split('-');
+                        dateDisplayText = `${year}/${month}/${day}`;
+                    } else {
+                        // ISO形式の場合はDateオブジェクトに変換
+                        const date = new Date(lastEatenDate);
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        dateDisplayText = `${year}/${month}/${day}`;
+                    }
                 } catch (e) {
                     console.error(`❌ 日付変換エラー [${index}]:`, e);
-                    formattedDate = '';
+                    dateDisplayText = '';
                 }
+            } else if (meal.formattedDate) {
+                // formattedDateが既に設定されている場合はそれを使用
+                dateDisplayText = meal.formattedDate;
             }
-            
-            // 日付表示用のテキストを生成（YYYY/MM/DD形式）
-            const dateDisplayText = formattedDate || '';
             
             item.innerHTML = `
                 <div class="tag-container">
@@ -597,16 +615,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            // データオブジェクトを構築
+            // 自動記録: 保存ボタンを押した瞬間の日時を取得（ISO形式）
+            const now = new Date();
+            const lastEatenAtISO = now.toISOString(); // 最後に食べた日時を自動記録
+            const lastEatenAtDate = lastEatenAtISO.split('T')[0]; // YYYY-MM-DD形式に変換
+            
+            // データオブジェクトを構築（name列に保存する全データ）
             const data = {
                 料理名: mealName,
-                ジャンル: selectedGenre || '',
-                カテゴリー: selectedCategory || '',
                 メイン食材: mainIngredient || '',
-                メモ: memo || ''
+                カテゴリー: selectedCategory || '',
+                ジャンル: selectedGenre || '',
+                メモ: memo || '',
+                最後に食べた日: lastEatenAtDate
             };
             
             console.log('📝 保存するデータ:', data);
+            console.log('📝 JSON文字列化:', JSON.stringify(data));
             
             // --- 保存処理のロジック：新規保存と上書き更新を完全に切り分け ---
             // editingIdが空でない場合は上書き更新、空の場合は新規保存
@@ -625,24 +650,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(`🔄 IDを数値型に変換: "${editingId}" → ${idToUpdate}`);
                 }
                 
-                // 自動記録: 保存ボタンを押した瞬間の日時を取得（ISO形式）
-                const now = new Date();
-                const updatedAt = now.toISOString();
-                const lastEatenAt = now.toISOString(); // 最後に食べた日時を自動記録
-                console.log('📅 更新日時を自動記録:', updatedAt);
-                console.log('📅 最後に食べた日時を自動記録:', lastEatenAt);
-                
                 // supabase.from('meals').update(...).eq('id', editingId) を実行
+                // name列のみに全データをJSON文字列として保存
                 const { data: updateResult, error } = await supabaseClient
                     .from('meals')
                     .update({ 
-                        name: JSON.stringify(data),
-                        meal_name: mealName,
-                        genre: selectedGenre || '',
-                        main_ingredient: mainIngredient || '',
-                        memo: memo || '',
-                        updated_at: updatedAt, // 更新日時を自動記録
-                        last_eaten_at: lastEatenAt // 最後に食べた日時を自動記録
+                        name: JSON.stringify(data)
                     })
                     .eq('id', idToUpdate) // 正しいターゲット指定：今編集しているデータだけを書き換え
                     .select(); // 更新されたデータを返す
@@ -678,28 +691,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('📝 新規保存を実行します');
                 console.log('📝 editingIdが空のため、新規保存として処理します');
                 
-                // 自動記録: 保存ボタンを押した瞬間の日時を取得（ISO形式）
-                const now = new Date();
-                const createdAt = now.toISOString();
-                const updatedAt = now.toISOString(); // 新規保存時もupdated_atを設定
-                const lastEatenAt = now.toISOString(); // 最後に食べた日時を自動記録
-                console.log('📅 保存日時を自動記録:', createdAt);
-                console.log('📅 更新日時を自動記録:', updatedAt);
-                console.log('📅 最後に食べた日時を自動記録:', lastEatenAt);
-                
                 // supabase.from('meals').insert を実行（updateではない）
-                // created_at、updated_at、last_eaten_atを自動でDBに送る
+                // name列のみに全データをJSON文字列として保存
                 const { data: insertData, error } = await supabaseClient
                     .from('meals')
                     .insert({ 
-                        name: JSON.stringify(data),
-                        meal_name: mealName,
-                        genre: selectedGenre || '',
-                        main_ingredient: mainIngredient || '',
-                        memo: memo || '',
-                        created_at: createdAt,
-                        updated_at: updatedAt, // 新規保存時もupdated_atを設定
-                        last_eaten_at: lastEatenAt // 最後に食べた日時を自動記録
+                        name: JSON.stringify(data)
                     })
                     .select();
                 
