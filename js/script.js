@@ -109,9 +109,21 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (target.classList.contains('delete-btn')) {
                 e.preventDefault();
                 e.stopPropagation();
+                // Supabaseのidを取得（data-id属性から）
+                const mealId = target.getAttribute('data-id');
                 const index = parseInt(target.getAttribute('data-index'));
-                console.log(`🗑️ 削除ボタンがクリックされました (index: ${index})`);
-                deleteMeal(index);
+                
+                console.log(`🗑️ 削除ボタンがクリックされました`);
+                console.log(`🗑️ 送信しようとしているID: ${mealId} (型: ${typeof mealId})`);
+                console.log(`🗑️ 配列インデックス: ${index}`);
+                
+                if (!mealId) {
+                    console.error('❌ 削除ボタンにIDが設定されていません');
+                    alert('削除するデータのIDが見つかりません');
+                    return;
+                }
+                
+                deleteMeal(mealId, index);
             }
         });
         console.log('✅ 編集・削除ボタンのイベント委譲が設定されました');
@@ -131,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchMeals() {
         try {
             console.log('🔄 データベースからデータを取得中...');
+            // すべての列を取得（id列を含む）
             const { data, error } = await supabaseClient.from('meals').select('*');
             if (error) throw error;
 
@@ -138,6 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Supabaseのデータをアプリ用形式に変換
             allMeals = data.map((item, idx) => {
+                // IDが確実に取得できているか確認
+                if (!item.id) {
+                    console.error(`❌ データ[${idx}]にIDが存在しません:`, item);
+                }
+                
                 try {
                     // もしnameがJSON形式なら展開、そうでなければそのまま
                     const parsedData = { id: item.id, ...JSON.parse(item.name) };
@@ -155,6 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     return fallbackData;
                 }
             });
+
+            // すべてのデータのIDを確認
+            const idsWithoutId = allMeals.filter(meal => !meal.id);
+            if (idsWithoutId.length > 0) {
+                console.error(`❌ IDが存在しないデータが${idsWithoutId.length}件あります`);
+            }
 
             displayMeals(allMeals);
             console.log('✅ データの読み込みに成功しました'); // アラートの代わりにログに出す
@@ -198,6 +222,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const genre = genreValue === 'その他' ? '麺類' : genreValue;
             const genreClass = genre === '和食' ? 'japanese' : genre === '洋食' ? 'western' : genre === '中華' ? 'chinese' : genre === '麺類' ? 'noodle' : 'other';
 
+            // Supabaseのidを確実に取得（数値型または文字列型）
+            const mealId = meal.id;
+            if (!mealId) {
+                console.error('❌ データにIDが存在しません:', meal);
+            }
+            
             item.innerHTML = `
                 <div class="tag-container">
                     ${genre ? `<span class="genre-tag ${genreClass}">${genre}</span>` : ''}
@@ -206,8 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="meal-header" style="display:flex; justify-content:space-between; align-items:center;">
                     <h4 class="meal-name" style="margin:0;">${name} ${favoriteIcon}</h4>
                     <div>
-                        <button class="edit-btn" data-index="${index}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
-                        <button class="delete-btn" data-index="${index}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
+                        <button class="edit-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
+                        <button class="delete-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
                     </div>
                 </div>
                 <div class="meal-details">
@@ -427,29 +457,47 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 削除処理
     // ==========================================
-    async function deleteMeal(index) {
-        console.log(`🗑️ deleteMeal関数が呼び出されました (index: ${index})`);
-        
-        // インデックスのバリデーション
-        if (index < 0 || index >= allMeals.length) {
-            console.error(`❌ 無効なインデックス: ${index} (allMeals.length: ${allMeals.length})`);
-            alert('削除するデータが見つかりません');
-            return;
+    async function deleteMeal(mealId, index = null) {
+        console.log(`🗑️ deleteMeal関数が呼び出されました`);
+        console.log(`🗑️ 削除対象ID: ${mealId} (型: ${typeof mealId})`);
+        if (index !== null) {
+            console.log(`🗑️ 配列インデックス: ${index}`);
         }
         
-        // 削除対象のデータを取得
-        const mealToDelete = allMeals[index];
-        console.log('🗑️ 削除対象のデータ:', mealToDelete);
-        
-        // IDの確認（Supabaseの主キー）
-        const mealId = mealToDelete.id;
+        // IDのバリデーション
         if (!mealId) {
-            console.error('❌ 削除対象のデータにIDが存在しません:', mealToDelete);
-            alert('削除するデータにIDが見つかりません');
+            console.error('❌ IDが指定されていません');
+            alert('削除するデータのIDが見つかりません');
             return;
         }
         
-        console.log(`🗑️ 削除対象のID: ${mealId} (型: ${typeof mealId})`);
+        // IDの型を確認し、数値型に統一（Supabaseの主キーは通常数値型）
+        // 文字列として渡された場合は数値に変換を試みる
+        let idToDelete = mealId;
+        if (typeof mealId === 'string' && !isNaN(mealId)) {
+            idToDelete = parseInt(mealId, 10);
+            console.log(`🔄 IDを数値型に変換: "${mealId}" → ${idToDelete}`);
+        } else if (typeof mealId === 'string' && mealId.includes('.')) {
+            idToDelete = parseFloat(mealId);
+            console.log(`🔄 IDを浮動小数点数型に変換: "${mealId}" → ${idToDelete}`);
+        }
+        
+        console.log(`🗑️ 最終的な削除対象ID: ${idToDelete} (型: ${typeof idToDelete})`);
+        
+        // 削除対象のデータを確認（デバッグ用）
+        const mealToDelete = allMeals.find(meal => {
+            // IDの型が異なる可能性があるため、両方の型で比較
+            return meal.id === idToDelete || 
+                   meal.id === mealId || 
+                   String(meal.id) === String(mealId) ||
+                   Number(meal.id) === Number(idToDelete);
+        });
+        
+        if (mealToDelete) {
+            console.log('🗑️ 削除対象のデータが見つかりました:', mealToDelete);
+        } else {
+            console.warn('⚠️ allMeals配列内で該当データが見つかりませんでした（データベースから直接削除を試みます）');
+        }
         
         // 確認ダイアログ
         if (!confirm('このおかずを削除しますか？')) {
@@ -459,12 +507,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Supabaseからデータを削除
-            console.log(`🗑️ データベースから削除を開始します (id: ${mealId})...`);
-            const { data, error } = await supabaseClient
+            // IDの型を確実に一致させるため、数値型と文字列型の両方を試す
+            console.log(`🗑️ データベースから削除を開始します (id: ${idToDelete}, 型: ${typeof idToDelete})...`);
+            
+            // まず数値型で試す（Supabaseの主キーは通常数値型）
+            let { data, error } = await supabaseClient
                 .from('meals')
                 .delete()
-                .eq('id', mealId)
+                .eq('id', idToDelete)
                 .select(); // 削除されたデータを返す
+            
+            // 数値型で失敗した場合、元のID（文字列型）で再試行
+            if (error || !data || data.length === 0) {
+                console.log(`🔄 数値型での削除が失敗したため、元のID型で再試行します...`);
+                ({ data, error } = await supabaseClient
+                    .from('meals')
+                    .delete()
+                    .eq('id', mealId)
+                    .select());
+            }
             
             if (error) {
                 console.error('❌ データベース削除エラー:', error);
@@ -479,7 +540,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('✅ 削除されたデータ:', data);
             } else {
                 console.warn('⚠️ 削除されたデータが0件です。IDが正しくない可能性があります。');
-                console.warn('⚠️ 削除対象ID:', mealId);
+                console.warn('⚠️ 試行した削除対象ID:', idToDelete, '(型:', typeof idToDelete, ')');
+                console.warn('⚠️ 元のID:', mealId, '(型:', typeof mealId, ')');
                 alert('削除に失敗しました: データが見つかりませんでした');
                 return;
             }
