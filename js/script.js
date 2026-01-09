@@ -130,23 +130,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchMeals() {
         try {
+            console.log('🔄 データベースからデータを取得中...');
             const { data, error } = await supabaseClient.from('meals').select('*');
             if (error) throw error;
 
+            console.log(`📊 取得したデータ件数: ${data ? data.length : 0}件`);
+
             // Supabaseのデータをアプリ用形式に変換
-            allMeals = data.map(item => {
+            allMeals = data.map((item, idx) => {
                 try {
                     // もしnameがJSON形式なら展開、そうでなければそのまま
-                    return { id: item.id, ...JSON.parse(item.name) };
+                    const parsedData = { id: item.id, ...JSON.parse(item.name) };
+                    // IDの確認ログ（最初の3件のみ）
+                    if (idx < 3) {
+                        console.log(`📝 データ[${idx}]: ID=${parsedData.id} (型: ${typeof parsedData.id}), 料理名=${parsedData.料理名 || parsedData.name || 'なし'}`);
+                    }
+                    return parsedData;
                 } catch (e) {
-                    return { id: item.id, name: item.name, category: item.category };
+                    const fallbackData = { id: item.id, name: item.name, category: item.category };
+                    // IDの確認ログ（最初の3件のみ）
+                    if (idx < 3) {
+                        console.log(`📝 データ[${idx}]: ID=${fallbackData.id} (型: ${typeof fallbackData.id}), name=${fallbackData.name || 'なし'}`);
+                    }
+                    return fallbackData;
                 }
             });
 
             displayMeals(allMeals);
-            console.log('データの読み込みに成功しました'); // アラートの代わりにログに出す
+            console.log('✅ データの読み込みに成功しました'); // アラートの代わりにログに出す
         } catch (error) {
-            console.error('読み込み失敗:', error.message);
+            console.error('❌ 読み込み失敗:', error.message);
+            console.error('❌ エラー詳細:', JSON.stringify(error, null, 2));
         }
     }
 
@@ -415,38 +429,73 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     async function deleteMeal(index) {
         console.log(`🗑️ deleteMeal関数が呼び出されました (index: ${index})`);
+        
+        // インデックスのバリデーション
         if (index < 0 || index >= allMeals.length) {
             console.error(`❌ 無効なインデックス: ${index} (allMeals.length: ${allMeals.length})`);
             alert('削除するデータが見つかりません');
             return;
         }
-        console.log('🗑️ 削除対象のデータ:', allMeals[index]);
+        
+        // 削除対象のデータを取得
+        const mealToDelete = allMeals[index];
+        console.log('🗑️ 削除対象のデータ:', mealToDelete);
+        
+        // IDの確認（Supabaseの主キー）
+        const mealId = mealToDelete.id;
+        if (!mealId) {
+            console.error('❌ 削除対象のデータにIDが存在しません:', mealToDelete);
+            alert('削除するデータにIDが見つかりません');
+            return;
+        }
+        
+        console.log(`🗑️ 削除対象のID: ${mealId} (型: ${typeof mealId})`);
+        
+        // 確認ダイアログ
         if (!confirm('このおかずを削除しますか？')) {
             console.log('🗑️ 削除がキャンセルされました');
             return;
         }
 
-        // Supabaseからデータを削除
-        const mealId = allMeals[index].id;
-        console.log(`🗑️ データベースから削除を開始します (id: ${mealId})...`);
-        const { error } = await supabaseClient
-            .from('meals')
-            .delete()
-            .eq('id', mealId);
-        
-        if (error) {
-            console.error('❌ データベース削除エラー:', error);
-            alert('削除に失敗しました: ' + error.message);
-            return;
-        }
+        try {
+            // Supabaseからデータを削除
+            console.log(`🗑️ データベースから削除を開始します (id: ${mealId})...`);
+            const { data, error } = await supabaseClient
+                .from('meals')
+                .delete()
+                .eq('id', mealId)
+                .select(); // 削除されたデータを返す
+            
+            if (error) {
+                console.error('❌ データベース削除エラー:', error);
+                console.error('❌ エラー詳細:', JSON.stringify(error, null, 2));
+                alert('削除に失敗しました: ' + error.message);
+                return;
+            }
 
-        console.log('✅ DB削除成功');
-        
-        // データベースから最新データを再取得して表示を更新（これが一番確実です）
-        console.log('🔄 データを再取得します...');
-        await fetchMeals();
-        
-        alert('削除しました！');
+            // 削除結果の確認
+            if (data && data.length > 0) {
+                console.log(`✅ DB削除成功: ${data.length}件のデータが削除されました`);
+                console.log('✅ 削除されたデータ:', data);
+            } else {
+                console.warn('⚠️ 削除されたデータが0件です。IDが正しくない可能性があります。');
+                console.warn('⚠️ 削除対象ID:', mealId);
+                alert('削除に失敗しました: データが見つかりませんでした');
+                return;
+            }
+
+            // データベースの削除が成功した後にのみ、画面を更新
+            console.log('🔄 データを再取得して画面を更新します...');
+            await fetchMeals();
+            
+            console.log('✅ 削除処理が完了しました');
+            alert('削除しました！');
+            
+        } catch (err) {
+            console.error('❌ 削除処理中にエラーが発生しました:', err);
+            console.error('❌ エラー詳細:', JSON.stringify(err, null, 2));
+            alert('削除中にエラーが発生しました: ' + err.message);
+        }
     }
 
     // HTMLのoninput属性から呼び出される関数をグローバルスコープに公開
