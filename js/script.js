@@ -151,11 +151,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // 内部関数（この中に入れます）
     // ==========================================
 
+    // 日付フォーマット関数: DBから取得した日付を「2024/01/10 12:30」形式に変換
+    function formatDateTime(dateString) {
+        if (!dateString) return '';
+        
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            
+            return `${year}/${month}/${day} ${hours}:${minutes}`;
+        } catch (e) {
+            console.error('❌ 日付フォーマットエラー:', e);
+            return '';
+        }
+    }
+
     async function fetchMeals() {
         try {
             console.log('🔄 データベースからデータを取得中...');
-            // すべての列を取得（id列を含む）
-            const { data, error } = await supabaseClient.from('meals').select('*');
+            // すべての列を取得（id列とcreated_at列を含む）
+            // created_atで降順に並べ替え（最新が上）
+            const { data, error } = await supabaseClient
+                .from('meals')
+                .select('*')
+                .order('created_at', { ascending: false }); // 最新が上に来るように降順
+            
             if (error) throw error;
 
             console.log(`📊 取得したデータ件数: ${data ? data.length : 0}件`);
@@ -169,17 +195,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 try {
                     // もしnameがJSON形式なら展開、そうでなければそのまま
-                    const parsedData = { id: item.id, ...JSON.parse(item.name) };
+                    const parsedData = { 
+                        id: item.id, 
+                        created_at: item.created_at, // created_atを保持
+                        ...JSON.parse(item.name) 
+                    };
+                    
+                    // 日付をフォーマット
+                    if (parsedData.created_at) {
+                        parsedData.formattedDate = formatDateTime(parsedData.created_at);
+                    }
+                    
                     // IDの確認ログ（最初の3件のみ）
                     if (idx < 3) {
-                        console.log(`📝 データ[${idx}]: ID=${parsedData.id} (型: ${typeof parsedData.id}), 料理名=${parsedData.料理名 || parsedData.name || 'なし'}`);
+                        console.log(`📝 データ[${idx}]: ID=${parsedData.id}, 日付=${parsedData.formattedDate || 'なし'}, 料理名=${parsedData.料理名 || parsedData.name || 'なし'}`);
                     }
                     return parsedData;
                 } catch (e) {
-                    const fallbackData = { id: item.id, name: item.name, category: item.category };
+                    const fallbackData = { 
+                        id: item.id, 
+                        created_at: item.created_at,
+                        name: item.name, 
+                        category: item.category 
+                    };
+                    
+                    // 日付をフォーマット
+                    if (fallbackData.created_at) {
+                        fallbackData.formattedDate = formatDateTime(fallbackData.created_at);
+                    }
+                    
                     // IDの確認ログ（最初の3件のみ）
                     if (idx < 3) {
-                        console.log(`📝 データ[${idx}]: ID=${fallbackData.id} (型: ${typeof fallbackData.id}), name=${fallbackData.name || 'なし'}`);
+                        console.log(`📝 データ[${idx}]: ID=${fallbackData.id}, 日付=${fallbackData.formattedDate || 'なし'}, name=${fallbackData.name || 'なし'}`);
                     }
                     return fallbackData;
                 }
@@ -191,8 +238,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(`❌ IDが存在しないデータが${idsWithoutId.length}件あります`);
             }
 
+            // 並べ替え: created_atで降順（最新が上）- 既にSupabaseで並べ替え済みだが、念のため
+            allMeals.sort((a, b) => {
+                const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+                const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+                return dateB - dateA; // 降順（新しい順）
+            });
+
             displayMeals(allMeals);
-            console.log('✅ データの読み込みに成功しました'); // アラートの代わりにログに出す
+            console.log('✅ データの読み込みに成功しました（最新順に並べ替え済み）');
         } catch (error) {
             console.error('❌ 読み込み失敗:', error.message);
             console.error('❌ エラー詳細:', JSON.stringify(error, null, 2));
@@ -239,13 +293,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('❌ データにIDが存在しません:', meal);
             }
             
+            // 日付の取得とフォーマット
+            const formattedDate = meal.formattedDate || (meal.created_at ? formatDateTime(meal.created_at) : '');
+            const dateDisplay = formattedDate ? `<span class="meal-date">${formattedDate}</span>` : '';
+            
             item.innerHTML = `
                 <div class="tag-container">
                     ${genre ? `<span class="genre-tag ${genreClass}">${genre}</span>` : ''}
                     <span class="category-tag">${category}</span>
                 </div>
-                <div class="meal-header" style="display:flex; justify-content:space-between; align-items:center;">
-                    <h4 class="meal-name" style="margin:0;">${name} ${favoriteIcon}</h4>
+                <div class="meal-header">
+                    <div class="meal-date-row">
+                        ${dateDisplay}
+                        <h4 class="meal-name">${name} ${favoriteIcon}</h4>
+                    </div>
                     <div>
                         <button class="edit-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
                         <button class="delete-btn" data-index="${index}" data-id="${mealId}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
@@ -490,10 +551,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('📝 新規保存を実行します');
                 console.log('📝 editingIdが空のため、新規保存として処理します');
                 
+                // 自動記録: 現在の日時を取得
+                const now = new Date();
+                const createdAt = now.toISOString();
+                console.log('📅 保存日時を自動記録:', createdAt);
+                
                 // supabase.from('meals').insert を実行（updateではない）
+                // created_atを自動でDBに送る
                 const { data: insertData, error } = await supabaseClient
                     .from('meals')
-                    .insert({ name: JSON.stringify(data) })
+                    .insert({ 
+                        name: JSON.stringify(data),
+                        created_at: createdAt
+                    })
                     .select();
                 
                 if (error) {

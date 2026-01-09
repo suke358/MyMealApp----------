@@ -10,17 +10,19 @@ body {
     min-height: 100vh;
     padding: 20px;
     padding-bottom: 100px;
+    line-height: 1.6;
 }
 
 .container {
-    max-width: 600px;
+    max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
 h1 {
     color: white;
     text-align: center;
-    font-size: 32px;
+    font-size: clamp(24px, 5vw, 32px);
     margin-bottom: 12px;
     font-weight: 700;
     text-shadow: 0 2px 10px rgba(0,0,0,0.2);
@@ -31,14 +33,14 @@ h1 {
     color: rgba(255, 255, 255, 0.9);
     margin-top: -2px;
     margin-bottom: 24px;
-    font-size: 13px;
+    font-size: clamp(12px, 2.5vw, 14px);
     letter-spacing: 0.08em;
 }
 
 .form-section {
     background: white;
     border-radius: 20px;
-    padding: 25px;
+    padding: clamp(20px, 4vw, 30px);
     margin-bottom: 25px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
@@ -49,7 +51,7 @@ h1 {
 
 label {
     display: block;
-    font-size: 16px;
+    font-size: clamp(14px, 3vw, 16px);
     font-weight: 600;
     color: #333;
     margin-bottom: 10px;
@@ -57,25 +59,26 @@ label {
 
 .category-buttons {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 12px;
     margin-bottom: 20px;
 }
 
 .category-btn {
-    padding: 18px 12px;
+    padding: clamp(14px, 3vw, 18px) 12px;
     border: 3px solid #e0e0e0;
     border-radius: 15px;
     background: white;
-    font-size: 18px;
+    font-size: clamp(14px, 3vw, 18px);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     color: #333;
-    min-height: 60px;
+    min-height: clamp(50px, 8vw, 60px);
     display: flex;
     align-items: center;
     justify-content: center;
+    touch-action: manipulation;
 }
 
 .category-btn.active {
@@ -124,25 +127,26 @@ label {
 
 .genre-buttons {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 12px;
     margin-bottom: 20px;
 }
 
 .genre-btn {
-    padding: 18px 12px;
+    padding: clamp(14px, 3vw, 18px) 12px;
     border: 3px solid #e0e0e0;
     border-radius: 15px;
     background: white;
-    font-size: 18px;
+    font-size: clamp(14px, 3vw, 18px);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     color: #333;
-    min-height: 60px;
+    min-height: clamp(50px, 8vw, 60px);
     display: flex;
     align-items: center;
     justify-content: center;
+    touch-action: manipulation;
 }
 
 .genre-btn.active {
@@ -178,17 +182,19 @@ label {
 }
 
 input[type="text"],
+input[type="date"],
 textarea {
     width: 100%;
-    padding: 18px;
+    padding: clamp(14px, 3vw, 18px);
     border: 2px solid #e0e0e0;
     border-radius: 12px;
-    font-size: 18px;
+    font-size: clamp(14px, 3vw, 18px);
     font-family: inherit;
     transition: border-color 0.3s ease;
 }
 
 input[type="text"]:focus,
+input[type="date"]:focus,
 textarea:focus {
     outline: none;
     border-color: #667eea;
@@ -201,50 +207,28 @@ textarea {
 
 .save-btn {
     width: 100%;
-    padding: 20px;
+    padding: clamp(16px, 3vw, 20px);
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 15px;
-    font-size: 20px;
+    font-size: clamp(16px, 3vw, 20px);
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-    min-height: 60px;
+    min-height: clamp(50px, 8vw, 60px);
+    touch-action: manipulation;
 }
 
 .save-btn:active {
     transform: scale(0.98);
 }
 
-.export-btn, .import-btn {
-    flex: 1;
-    padding: 15px;
-    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 3px 10px rgba(127, 140, 141, 0.3);
-}
-
-.export-btn:active, .import-btn:active {
-    transform: scale(0.98);
-}
-
-.save-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
 .meals-section {
     background: white;
     border-radius: 20px;
-    padding: 25px;
+    padding: clamp(20px, 4vw, 30px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
@@ -253,10 +237,12 @@ textarea {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .meals-header h2 {
-    font-size: 24px;
+    font-size: clamp(20px, 4vw, 24px);
     color: #333;
 }
 
@@ -270,22 +256,6 @@ textarea {
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: #888;
-}
-
-.clear-btn {
-    padding: 10px 20px;
-    background: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.clear-btn:active {
-    transform: scale(0.95);
 }
 
 .controls-row {
@@ -302,10 +272,10 @@ textarea {
 
 .search-box input {
     width: 100%;
-    padding: 14px 40px 14px 16px;
+    padding: clamp(12px, 2.5vw, 14px) 40px clamp(12px, 2.5vw, 14px) 16px;
     border-radius: 999px;
     border: 2px solid #e0e0e0;
-    font-size: 15px;
+    font-size: clamp(14px, 2.5vw, 15px);
 }
 
 .search-box input:focus {
@@ -329,13 +299,17 @@ textarea {
 }
 
 .filter-chip {
-    padding: 8px 14px;
+    padding: clamp(6px, 1.5vw, 8px) clamp(12px, 2vw, 14px);
     border-radius: 999px;
     border: 1px solid #e0e0e0;
     background: #f8f9fa;
-    font-size: 13px;
+    font-size: clamp(12px, 2vw, 13px);
     cursor: pointer;
     transition: all 0.2s ease;
+    touch-action: manipulation;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
 }
 
 .filter-chip.active {
@@ -347,7 +321,7 @@ textarea {
 
 .suggestion-wrapper {
     margin: 8px 0 18px;
-    padding: 14px 16px;
+    padding: clamp(12px, 2.5vw, 16px);
     border-radius: 16px;
     background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
     display: flex;
@@ -360,27 +334,29 @@ textarea {
     justify-content: space-between;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .suggestion-title {
-    font-size: 16px;
+    font-size: clamp(14px, 3vw, 16px);
     font-weight: 700;
     color: #7b341e;
 }
 
 .suggestion-btn {
-    padding: 10px 16px;
+    padding: clamp(8px, 2vw, 10px) clamp(12px, 2.5vw, 16px);
     border-radius: 999px;
     border: none;
     background: #ff7e5f;
     color: white;
-    font-size: 14px;
+    font-size: clamp(12px, 2.5vw, 14px);
     font-weight: 700;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(255, 126, 95, 0.5);
     display: flex;
     align-items: center;
     gap: 6px;
+    touch-action: manipulation;
 }
 
 .suggestion-btn:active {
@@ -388,297 +364,14 @@ textarea {
 }
 
 .suggestion-note {
-    font-size: 12px;
+    font-size: clamp(11px, 2vw, 12px);
     color: rgba(123, 52, 30, 0.8);
-}
-
-.suggestion-card {
-    margin-top: 8px;
-    border-radius: 18px;
-    padding: 16px 18px;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-}
-
-.suggestion-label {
-    font-size: 12px;
-    color: #ff7e5f;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-}
-
-.suggestion-name {
-    font-size: 20px;
-    font-weight: 800;
-    margin-bottom: 6px;
-    color: #333;
-}
-
-.suggestion-category {
-    display: inline-block;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    color: white;
-    margin-bottom: 6px;
-}
-
-.suggestion-ingredients {
-    font-size: 14px;
-    color: #555;
-    line-height: 1.6;
-    white-space: pre-wrap;
-}
-
-.menu-section-title {
-    margin: 18px 0 10px;
-    font-size: 15px;
-    font-weight: 700;
-    color: #555;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-}
-
-.menu-section-title span {
-    font-size: 13px;
-    font-weight: 500;
-    margin-left: 8px;
-    color: #aaa;
-}
-
-.meal-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 14px;
-}
-
-.meal-item {
-    background: #f8f9fa;
-    border-radius: 15px;
-    padding: 20px;
-    margin-bottom: 8px;
-    border-left: 5px solid #667eea;
-    transition: all 0.3s ease;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.meal-item.beef {
-    border-left-color: #e74c3c;
-}
-
-.meal-item.pork {
-    border-left-color: #f39c12;
-}
-
-.meal-item.chicken {
-    border-left-color: #e67e22;
-}
-
-.meal-item.fish {
-    border-left-color: #3498db;
-}
-
-.meal-item.vegetable {
-    border-left-color: #27ae60;
-}
-
-.meal-item.other {
-    border-left-color: #9b59b6;
-}
-
-.meal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.meal-category {
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    color: white;
-}
-
-.meal-category.beef {
-    background: #e74c3c;
-}
-
-.meal-category.pork {
-    background: #f39c12;
-}
-
-.meal-category.chicken {
-    background: #e67e22;
-}
-
-.meal-category.fish {
-    background: #3498db;
-}
-
-.meal-category.vegetable {
-    background: #27ae60;
-}
-
-.meal-category.other {
-    background: #9b59b6;
-}
-
-.meal-name {
-    font-size: 20px;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 8px;
-}
-
-.meal-ingredients {
-    font-size: 16px;
-    color: #666;
-    line-height: 1.6;
-    white-space: pre-wrap;
-}
-
-.meal-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.edit-btn, .delete-btn {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.edit-btn {
-    background: #3498db;
-    color: white;
-}
-
-.delete-btn {
-    background: #e74c3c;
-    color: white;
-}
-
-.edit-btn:active, .delete-btn:active {
-    transform: scale(0.95);
-}
-
-.edit-btn:hover, .delete-btn:hover {
-    opacity: 0.7;
-}
-
-.meal-actions {
-    position: relative;
-}
-
-.edit-btn, .delete-btn {
-    position: absolute;
-    top: 15px;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.edit-btn {
-    right: 50px;
-}
-
-.delete-btn {
-    right: 15px;
-}
-
-.empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: #999;
-    font-size: 18px;
-}
-
-.date-info {
-    font-size: 14px;
-    color: #999;
-    margin-top: 10px;
-}
-
-.no-result-hint {
-    text-align: center;
-    padding: 24px 16px;
-    color: #999;
-    font-size: 14px;
-}
-
-.favorite-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: #ffe08a;
-    color: #8b5e00;
-    font-weight: 700;
-    font-size: 12px;
-    margin-left: 6px;
-}
-
-.loading-state {
-    text-align: center;
-    padding: 30px 16px;
-    color: #666;
-    font-weight: 600;
-}
-
-.toast {
-    position: fixed;
-    left: 50%;
-    bottom: 22px;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.85);
-    color: white;
-    padding: 12px 18px;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 14px;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.25);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    z-index: 20;
-}
-
-.toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-6px);
-}
-
-@media (max-width: 480px) {
-    .category-buttons {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    h1 {
-        font-size: 28px;
-    }
 }
 
 /* おかずリスト全体の枠 */
 #mealsList {
     display: grid;
-    grid-template-columns: 1fr; /* スマホでは1列 */
+    grid-template-columns: 1fr;
     gap: 15px;
     margin-top: 20px;
 }
@@ -686,108 +379,247 @@ textarea {
 /* おかず1つずつのカード */
 .meal-item {
     background: #ffffff;
-    padding: 15px;
+    padding: clamp(15px, 3vw, 20px);
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 軽い影で浮かせる */
-    border-left: 5px solid #ff7e5f; /* カテゴリー色などのアクセント線 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-left: 5px solid #ff7e5f;
+    transition: all 0.3s ease;
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 5px;
-}
-
-/* 料理名を目立たせる */
-.meal-name {
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-}
-
-/* サブ情報（メイン食材やカテゴリー） */
-.meal-info {
-    font-size: 14px;
-    color: #666;
-    display: flex;
     gap: 10px;
 }
 
-/* 「メイン：-」などのラベル */
-.info-label {
-    background: #f0f0f0;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-}
-
-/* 削除ボタン */
-.meal-header {
-    position: relative;
-}
-
-.delete-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.delete-btn:hover {
-    transform: scale(1.2);
-}
-
-.category-tag {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    color: white;
-    background: #667eea;
+.meal-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
 }
 
 .tag-container {
     display: flex;
     flex-direction: row;
-    gap: 5px;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
 }
 
 .genre-tag {
     display: inline-block;
-    padding: 4px 8px;
+    padding: 4px 10px;
     border-radius: 12px;
-    font-size: 12px;
+    font-size: clamp(11px, 2vw, 12px);
     font-weight: 600;
     color: white;
 }
 
 .genre-tag.japanese {
-    background: #a8d8f0;
+    background: #3498db;
 }
 
 .genre-tag.western {
-    background: #f5d76e;
+    background: #27ae60;
 }
 
 .genre-tag.chinese {
-    background: #f5a9a9;
+    background: #e74c3c;
 }
 
 .genre-tag.other {
-    background: #d1b3d9;
+    background: #9b59b6;
 }
 
 .genre-tag.noodle {
     background: #f39c12;
 }
 
+.category-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: clamp(11px, 2vw, 12px);
+    font-weight: 600;
+    color: white;
+    background: #667eea;
+}
+
+.meal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.meal-name {
+    font-size: clamp(16px, 3.5vw, 20px);
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+    flex: 1;
+}
+
+.meal-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.main-ingredient {
+    font-size: clamp(13px, 2.5vw, 15px);
+    color: #666;
+    margin: 0;
+}
+
+.memo {
+    font-size: clamp(12px, 2.5vw, 14px);
+    color: #888;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.last-ate {
+    font-size: clamp(11px, 2vw, 12px);
+    color: #999;
+    margin: 0;
+}
+
+/* 日付と料理名を並べて表示 */
+.meal-date-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.meal-date {
+    font-size: clamp(12px, 2vw, 13px);
+    color: #667eea;
+    font-weight: 600;
+    background: #f0f4ff;
+    padding: 4px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
 .edit-btn, .delete-btn {
-    width: 30px;
-    height: 30px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: clamp(18px, 3vw, 24px);
+    padding: 4px;
+    transition: transform 0.2s;
+    touch-action: manipulation;
+    min-width: 32px;
+    min-height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 5px;
+}
+
+.edit-btn:hover, .delete-btn:hover {
+    transform: scale(1.2);
+}
+
+.edit-btn:active, .delete-btn:active {
+    transform: scale(1.1);
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-size: clamp(14px, 3vw, 18px);
+}
+
+/* PC表示: 最大幅を制限して中央寄せ */
+@media (min-width: 768px) {
+    .container {
+        max-width: 900px;
+    }
+    
+    #mealsList {
+        grid-template-columns: 1fr;
+    }
+    
+    .category-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .genre-buttons {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .meal-item {
+        padding: 20px;
+    }
+}
+
+/* タブレット表示 */
+@media (min-width: 480px) and (max-width: 767px) {
+    .container {
+        max-width: 100%;
+        padding: 0 10px;
+    }
+    
+    .category-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .genre-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* スマホ表示: 1カラム、指で押しやすいボタンサイズ */
+@media (max-width: 479px) {
+    body {
+        padding: 10px;
+        padding-bottom: 80px;
+    }
+    
+    .container {
+        max-width: 100%;
+    }
+    
+    .form-section,
+    .meals-section {
+        padding: 15px;
+        border-radius: 15px;
+    }
+    
+    .category-buttons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .genre-buttons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .category-btn,
+    .genre-btn {
+        min-height: 50px;
+        font-size: 14px;
+    }
+    
+    .save-btn {
+        min-height: 50px;
+        font-size: 16px;
+    }
+    
+    .filter-chip {
+        min-height: 40px;
+        padding: 8px 12px;
+    }
+    
+    .meal-item {
+        padding: 15px;
+    }
+    
+    .meal-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
