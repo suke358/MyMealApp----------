@@ -18,25 +18,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 初期化処理
     // ==========================================
-    // ジャンルボタンのイベントリスナー
-    document.querySelectorAll('.genre-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedGenre = this.dataset.genre;
-            console.log('✅ ジャンルを選択しました:', selectedGenre);
-        });
-    });
+    // ボタンの参照をまとめて保持（ID/クラスのズレ防止）
+    const genreOptions = document.querySelectorAll('.genre-btn');
+    const categoryOptions = document.querySelectorAll('.category-btn');
 
-    // カテゴリーボタンのイベントリスナー
-    document.querySelectorAll('.category-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            selectedCategory = this.dataset.category;
-            console.log('✅ カテゴリーを選択しました:', selectedCategory);
+    if (!genreOptions || genreOptions.length === 0) {
+        console.error('❌ ジャンルボタン（.genre-btn）が見つかりません');
+    } else {
+        // ジャンルボタンのイベントリスナー
+        genreOptions.forEach(btn => {
+            btn.addEventListener('click', function() {
+                genreOptions.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedGenre = this.dataset.genre;
+                console.log('✅ ジャンルを選択しました:', selectedGenre);
+            });
         });
-    });
+    }
+
+    if (!categoryOptions || categoryOptions.length === 0) {
+        console.error('❌ カテゴリーボタン（.category-btn）が見つかりません');
+    } else {
+        // カテゴリーボタンのイベントリスナー
+        categoryOptions.forEach(btn => {
+            btn.addEventListener('click', function() {
+                categoryOptions.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedCategory = this.dataset.category;
+                console.log('✅ カテゴリーを選択しました:', selectedCategory);
+            });
+        });
+    }
 
     // 保存ボタンのイベントリスナー
     const saveBtn = document.getElementById('saveButton');
@@ -458,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // ジャンルボタンの選択状態をリセットし、該当するものをアクティブに
         const genre = meal.ジャンル || meal.genre || '';
-        document.querySelectorAll('.genre-btn').forEach(btn => {
+        genreOptions.forEach(btn => {
             btn.classList.remove('active');
             if (btn.dataset.genre === genre) {
                 btn.classList.add('active');
@@ -468,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // カテゴリーボタンの選択状態をリセットし、該当するものをアクティブに
         const category = meal.カテゴリー || meal.category || '';
-        document.querySelectorAll('.category-btn').forEach(btn => {
+        categoryOptions.forEach(btn => {
             btn.classList.remove('active');
             if (btn.dataset.category === category) {
                 btn.classList.add('active');
@@ -569,34 +581,34 @@ document.addEventListener('DOMContentLoaded', () => {
     // 保存処理
     // ==========================================
     async function saveMeal() {
-        console.log('saveMeal関数が実行されました');
-        console.log(`📝 現在のeditingId: ${editingId} (型: ${typeof editingId})`);
-        console.log(`📝 editingIdが空か: ${editingId === null || editingId === undefined || editingId === ''}`);
-        
-        // フォームからデータを取得
-        const mealName = document.getElementById('mealName').value.trim();
-        const mainIngredient = document.getElementById('mainIngredient').value.trim();
-        const memo = document.getElementById('memo').value.trim();
-        
-        // バリデーション
-        if (!mealName) {
-            alert('料理名を入力してください');
-            return;
-        }
-        
-        // データオブジェクトを構築
-        const data = {
-            料理名: mealName,
-            ジャンル: selectedGenre || '',
-            カテゴリー: selectedCategory || '',
-            メイン食材: mainIngredient || '',
-            メモ: memo || ''
-        };
-        
-        console.log('📝 保存するデータ:', data);
-        
-        // --- 保存処理のロジック：新規保存と上書き更新を完全に切り分け ---
+        console.log('💾 保存処理開始');
         try {
+            console.log(`📝 現在のeditingId: ${editingId} (型: ${typeof editingId})`);
+            console.log(`📝 editingIdが空か: ${editingId === null || editingId === undefined || editingId === ''}`);
+            
+            // フォームからデータを取得
+            const mealName = document.getElementById('mealName').value.trim();
+            const mainIngredient = document.getElementById('mainIngredient').value.trim();
+            const memo = document.getElementById('memo').value.trim();
+            
+            // バリデーション
+            if (!mealName) {
+                alert('料理名を入力してください');
+                return;
+            }
+            
+            // データオブジェクトを構築
+            const data = {
+                料理名: mealName,
+                ジャンル: selectedGenre || '',
+                カテゴリー: selectedCategory || '',
+                メイン食材: mainIngredient || '',
+                メモ: memo || ''
+            };
+            
+            console.log('📝 保存するデータ:', data);
+            
+            // --- 保存処理のロジック：新規保存と上書き更新を完全に切り分け ---
             // editingIdが空でない場合は上書き更新、空の場合は新規保存
             if (editingId !== null && editingId !== undefined && editingId !== '') {
                 // ==========================================
@@ -726,7 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('✅ 保存処理が完了しました。editingId:', editingId); 
 
         } catch (err) {
-            console.error('❌ エラー発生:', err.message);
+            console.error('❌ 保存処理中にエラー:', err);
             alert('エラーが発生しました: ' + err.message);
         }
     }
@@ -739,9 +751,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('memo').value = '';
         
         // ジャンルとカテゴリーの選択をリセット
-        document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+        genreOptions.forEach(b => b.classList.remove('active'));
         selectedGenre = '';
-        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        categoryOptions.forEach(b => b.classList.remove('active'));
         selectedCategory = '';
         
         // 編集モードをリセット（重要！）
