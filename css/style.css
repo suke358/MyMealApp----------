@@ -50,7 +50,11 @@ h1 {
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+}
+
+.form-group:last-of-type {
+    margin-bottom: 0;
 }
 
 label {
@@ -188,7 +192,6 @@ label {
 }
 
 input[type="text"],
-input[type="date"],
 textarea {
     width: 100%;
     padding: clamp(14px, 3vw, 18px);
@@ -201,7 +204,6 @@ textarea {
 }
 
 input[type="text"]:focus,
-input[type="date"]:focus,
 textarea:focus {
     outline: none;
     border-color: #667eea;
@@ -712,10 +714,10 @@ textarea {
         width: 100%;
     }
     
-    .meal-item {
+.meal-item {
         width: 100%;
         padding: 12px;
-        border-radius: 12px;
+    border-radius: 12px;
         margin-bottom: 10px;
     }
     
@@ -732,7 +734,7 @@ textarea {
         font-size: 11px;
     }
     
-    .meal-header {
+.meal-header {
         margin-bottom: 4px;
     }
     
