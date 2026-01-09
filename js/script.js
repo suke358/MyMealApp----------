@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedCategory = '';
     let selectedGenre = '';
     let editingIndex = null;
+    let editingId = null; // 編集対象のSupabase ID
     let allMeals = [];
 
     // ==========================================
@@ -104,7 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 e.stopPropagation();
                 const index = parseInt(target.getAttribute('data-index'));
-                console.log(`✏️ 編集ボタンがクリックされました (index: ${index})`);
+                const mealId = target.getAttribute('data-id');
+                console.log(`✏️ 編集ボタンがクリックされました`);
+                console.log(`✏️ 配列インデックス: ${index}`);
+                console.log(`✏️ データID: ${mealId} (型: ${typeof mealId})`);
                 editMeal(index);
             } else if (target.classList.contains('delete-btn')) {
                 e.preventDefault();
@@ -261,37 +265,59 @@ document.addEventListener('DOMContentLoaded', () => {
         const meal = allMeals[index];
         console.log('📝 編集対象のデータ:', meal);
         
+        // IDの確認（Supabaseの主キー）
+        const mealId = meal.id;
+        if (!mealId) {
+            console.error('❌ 編集対象のデータにIDが存在しません:', meal);
+            alert('編集するデータにIDが見つかりません');
+            return;
+        }
+        console.log(`📝 編集対象のID: ${mealId} (型: ${typeof mealId})`);
+        
         // フォームに値をセット
-        document.getElementById('mealName').value = meal.料理名 || '';
-        document.getElementById('mainIngredient').value = meal.メイン食材 || '';
+        document.getElementById('mealName').value = meal.料理名 || meal.name || '';
+        document.getElementById('mainIngredient').value = meal.メイン食材 || meal.mainIngredient || '';
         
         // カテゴリーボタンの選択状態をリセットし、該当するものをアクティブに
+        const category = meal.カテゴリー || meal.category || '';
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.classList.remove('active');
-            if (btn.dataset.category === meal.カテゴリー) {
+            if (btn.dataset.category === category) {
                 btn.classList.add('active');
             }
         });
-        selectedCategory = meal.カテゴリー || '';
+        selectedCategory = category;
         
         // ジャンルボタンの選択状態をリセットし、該当するものをアクティブに
+        const genre = meal.ジャンル || meal.genre || '';
         document.querySelectorAll('.genre-btn').forEach(btn => {
             btn.classList.remove('active');
-            if (btn.dataset.genre === meal.ジャンル) {
+            if (btn.dataset.genre === genre) {
                 btn.classList.add('active');
             }
         });
-        selectedGenre = meal.ジャンル || '';
+        selectedGenre = genre;
         
-        document.getElementById('memo').value = meal.メモ || '';
-        document.getElementById('lastAte').value = meal['最後に食べた日'] || '';
-        document.getElementById('favorite').checked = meal.お気に入り === 'はい';
+        document.getElementById('memo').value = meal.メモ || meal.memo || '';
+        document.getElementById('lastAte').value = meal['最後に食べた日'] || meal.lastAte || '';
+        document.getElementById('favorite').checked = meal.お気に入り === 'はい' || meal.favorite === true;
         
         // 編集モードに設定
         editingIndex = index;
+        editingId = mealId; // SupabaseのIDを保存
         
-        // 画面の最上部までスクロール
-        window.scrollTo(0, 0);
+        // 保存ボタンのテキストを「更新」に変更
+        const saveButton = document.getElementById('saveButton');
+        if (saveButton) {
+            saveButton.textContent = '更新';
+            console.log('✅ 保存ボタンを「更新」に変更しました');
+        }
+        
+        // 画面のスクロールを防ぐ（その場で編集モードに移行）
+        // event.preventDefault()は既にイベントリスナーで実行されているため、
+        // ここでは追加のスクロール処理を行わない
+        
+        console.log('✅ 編集モードに移行しました');
     }
 
     // ==========================================
@@ -397,18 +423,42 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- 修正ポイント：保存・更新の処理を確実に完了させる ---
         try {
-            if (editingIndex !== null) {
-                // 更新処理
+            if (editingIndex !== null && editingId !== null) {
+                // 更新処理（SupabaseのIDを直接使用）
                 console.log('📝 データベース更新を開始します...');
-                const { error } = await supabaseClient
+                console.log(`📝 更新対象ID: ${editingId} (型: ${typeof editingId})`);
+                console.log('📝 更新データ:', data);
+                
+                // IDの型を確認し、数値型に統一（Supabaseの主キーは通常数値型）
+                let idToUpdate = editingId;
+                if (typeof editingId === 'string' && !isNaN(editingId)) {
+                    idToUpdate = parseInt(editingId, 10);
+                    console.log(`🔄 IDを数値型に変換: "${editingId}" → ${idToUpdate}`);
+                }
+                
+                const { data: updateResult, error } = await supabaseClient
                     .from('meals')
                     .update({ name: JSON.stringify(data) })
-                    .eq('id', allMeals[editingIndex].id);
+                    .eq('id', idToUpdate)
+                    .select(); // 更新されたデータを返す
                 
                 if (error) {
                     console.error('❌ データベース更新エラー:', error);
+                    console.error('❌ エラーメッセージ:', error.message);
+                    console.error('❌ エラー詳細:', JSON.stringify(error, null, 2));
                     throw error;
                 }
+                
+                // 更新結果の確認
+                if (updateResult && updateResult.length > 0) {
+                    console.log(`✅ DB更新成功: ${updateResult.length}件のデータが更新されました`);
+                    console.log('✅ 更新されたデータ:', updateResult);
+                } else {
+                    console.warn('⚠️ 更新されたデータが0件です。IDが正しくない可能性があります。');
+                    console.warn('⚠️ 更新対象ID:', idToUpdate, '(型:', typeof idToUpdate, ')');
+                    throw new Error('データの更新に失敗しました: データが見つかりませんでした');
+                }
+                
                 console.log('✅ DB保存成功（更新）');
                 alert("修正しました！");
             } else {
@@ -452,6 +502,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
         selectedGenre = '';
         editingIndex = null;
+        editingId = null; // 編集IDもリセット
+        
+        // 保存ボタンのテキストを「保存」に戻す
+        const saveButton = document.getElementById('saveButton');
+        if (saveButton) {
+            saveButton.textContent = '保存';
+            console.log('✅ 保存ボタンを「保存」に戻しました');
+        }
     }
     
     // ==========================================
