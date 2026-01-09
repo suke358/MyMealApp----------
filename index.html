@@ -36,7 +36,7 @@
                     <button type="button" class="category-btn" data-category="牛">🐄 牛</button>
                     <button type="button" class="category-btn" data-category="豚">🐷 豚</button>
                     <button type="button" class="category-btn" data-category="鶏">🐔 鶏</button>
-                    <button type="button" class="category-btn" data-category="海鮮">🐟 海鮮</button>
+                    <button type="button" class="category-btn seafood" data-category="海鮮">🐟 海鮮</button>
                     <button type="button" class="category-btn" data-category="野菜">🥬 野菜</button>
                     <button type="button" class="category-btn" data-category="その他">🍽️ その他</button>
                 </div>
@@ -70,7 +70,7 @@
 
     <div class="controls-row">
         <div class="search-box">
-            <input type="text" id="searchInput" placeholder="食材名や料理名でさがす（例：鶏、にんじん、味噌）" oninput="filterMeals()">
+            <input type="text" id="searchInput" placeholder="食材名や料理名でさがす（例：鶏、にんじん、味噌）">
             <span class="search-icon">🔍</span>
         </div>
 
@@ -85,27 +85,24 @@
         </div>
     </div>
     
-    </div>
-    
-            <div class="suggestion-wrapper">
-                <div class="suggestion-top">
-                    <div class="suggestion-title">今日のおかずを相談する</div>
-                    <button class="suggestion-btn" id="suggestBtn">
-                        🎲 今日のおかず
-                    </button>
-                </div>
-                <p class="suggestion-note">登録済みのおかずの中から、いまの条件に合う一品をランダムでご提案します。</p>
-                <div id="suggestionArea"></div>
-            </div>
-
-            <!-- 履歴リスト: JavaScriptで動的に生成される
-                 各項目には以下の構造が含まれます:
-                 - 料理名と自動で入る日付を表示する場所 -->
-            <div id="mealsList">
-                <!-- 自動日時表示用の要素: JavaScriptで動的に生成される各カード内に
-                     料理名と日付（YYYY/MM/DD形式）が表示されます -->
-            </div>
+    <div class="suggestion-wrapper">
+        <div class="suggestion-top">
+            <div class="suggestion-title">今日のおかずを相談する</div>
+            <button class="suggestion-btn" id="suggestBtn">
+                🎲 今日のおかず
+            </button>
         </div>
+        <p class="suggestion-note">登録済みのおかずの中から、いまの条件に合う一品をランダムでご提案します。</p>
+        <div id="suggestionArea"></div>
+    </div>
+
+    <!-- 履歴リスト: JavaScriptで動的に生成される
+         各項目には以下の構造が含まれます:
+         - 料理名と自動で入る日付を表示する場所 -->
+    <div id="mealsList">
+        <!-- 自動日時表示用の要素: JavaScriptで動的に生成される各カード内に
+             料理名と日付（YYYY/MM/DD形式）が表示されます -->
+    </div>
     </div>
 
 
@@ -118,7 +115,5 @@
           .catch(err => console.error('PWA: 登録失敗', err));
       }
     </script>
-    </body>
-
 </body>
 </html>

@@ -370,6 +370,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const mainIngredient = meal.メイン食材 || meal.main_ingredient || '';
             const memo = meal.メモ || meal.memo || '';
             
+            // data-category属性を設定（フィルター機能用）
+            if (category) {
+                item.setAttribute('data-category', category);
+            }
+            
             // ジャンルとカテゴリーのタグを生成
             let genreTag = '';
             if (genre) {

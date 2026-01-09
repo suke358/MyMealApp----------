@@ -116,7 +116,7 @@ label {
     box-shadow: 0 5px 15px rgba(230, 126, 34, 0.4);
 }
 
-.category-btn.fish.active {
+.category-btn.seafood.active {
     border-color: #3498db;
     background: #3498db;
     box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
@@ -418,9 +418,8 @@ textarea {
 /* カード内のコンテンツ - 料理名と日付を左右に配置 */
 .meal-card-content {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    gap: 8px;
     width: 100%;
 }
 
@@ -441,7 +440,7 @@ textarea {
     border-left-color: #e67e22;
 }
 
-.meal-item.fish {
+.meal-item.seafood {
     border-left-color: #3498db;
 }
 
@@ -505,10 +504,11 @@ textarea {
 .meal-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: baseline;
     gap: 10px;
-    margin-bottom: 6px;
+    margin-bottom: 0;
     position: relative;
+    width: 100%;
 }
 
 /* カード内の料理名 */
@@ -611,6 +611,15 @@ textarea {
 /* 日付が空の場合もスペースを確保 */
 .meal-date:empty {
     display: none;
+}
+
+.meal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e8ecef;
 }
 
 .edit-btn, .delete-btn {
