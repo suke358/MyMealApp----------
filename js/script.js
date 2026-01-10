@@ -213,15 +213,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchMeals() {
         // バージョン情報ログ（Safariキャッシュ対策用）
-        console.log('📌 プログラム実行中: 2026-01-11 02:30版 (Safari対策済)');
+        console.log('📌 プログラム実行中: 2026-01-11 03:15版 (DBカラム不一致修正済)');
         console.log('🔄 fetchMeals関数が呼び出されました');
         try {
             console.log('🔄 データベースからデータを取得中...');
             // name列のみを取得（Supabaseのテーブルにはname列しかない）
+            // 注意: updated_atカラムは存在しないため、created_atでソート
             const { data, error } = await supabaseClient
                 .from('meals')
-                .select('id, name, created_at, updated_at')
-                .order('updated_at', { ascending: false }); // updated_atで降順ソート（最新が上）
+                .select('id, name, created_at')
+                .order('created_at', { ascending: false }); // created_atで降順ソート（最新が上）
             
             console.log('🔄 Supabaseクエリ実行完了');
             
@@ -232,12 +233,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             console.log(`📊 取得したデータ件数: ${data ? data.length : 0}件`);
 
-            // updated_atとcreated_atが取得できているか確認（デバッグ用）
-            const itemsWithoutUpdatedAt = data ? data.filter(item => !item.updated_at) : [];
+            // created_atが取得できているか確認（デバッグ用）
+            // 注意: updated_atカラムは存在しないため、created_atのみを確認
             const itemsWithoutCreatedAt = data ? data.filter(item => !item.created_at) : [];
-            if (itemsWithoutUpdatedAt.length > 0) {
-                console.warn(`⚠️ updated_atが取得できていないデータが${itemsWithoutUpdatedAt.length}件あります`);
-            }
             if (itemsWithoutCreatedAt.length > 0) {
                 console.warn(`⚠️ created_atが取得できていないデータが${itemsWithoutCreatedAt.length}件あります`);
             }
@@ -313,18 +311,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         
                         // パースしたデータを統合（スプレッド演算子の代わりにObject.assignを使用：Safari互換性向上）
+                        // 注意: updated_atカラムは存在しないため、created_atのみを保存
                         const parsedData = Object.assign({}, {
                             id: item.id, 
-                            created_at: item.created_at || null,
-                            updated_at: item.updated_at || null
+                            created_at: item.created_at || null
+                            // 将来updated_atカラムが追加された場合のためのメモ:
+                            // updated_at: item.updated_at || null
                         }, nameData);
                         
                         // 「最後に食べた日」を取得（name列のJSONオブジェクト内から）
                         const lastEatenDate = parsedData['最後に食べた日'] || null;
                         
-                        // 表示用の日付を決定: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_atを使用
-                        const dateToDisplay = lastEatenDate || parsedData.updated_at || parsedData.created_at;
-                        const dateType = lastEatenDate ? '最後に食べた日' : (parsedData.updated_at ? 'updated_at' : 'created_at');
+                        // 表示用の日付を決定: 「最後に食べた日」を優先、なければcreated_atを使用
+                        // 注意: updated_atカラムは存在しないため、created_atのみを使用
+                        const dateToDisplay = lastEatenDate || parsedData.created_at;
+                        const dateType = lastEatenDate ? '最後に食べた日' : 'created_at';
                         
                         // 日付を日本形式に変換（YYYY/MM/DD形式）
                         if (dateToDisplay) {
@@ -334,7 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const [year, month, day] = lastEatenDate.split('-');
                                     parsedData.formattedDate = `${year}/${month}/${day}`;
                                 } else {
-                                    // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換（Safari互換性対策）
+                                    // created_atはISO形式なので、Dateオブジェクトに変換（Safari互換性対策）
+                                    // 注意: updated_atカラムは存在しないため、created_atのみを使用
                                     try {
                                         const dateObj = new Date(dateToDisplay);
                                         // Invalid Dateのチェック
@@ -375,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else {
                             parsedData.formattedDate = '';
                             parsedData.displayDateType = null;
-                            console.warn(`⚠️ データ[${idx}]に「最後に食べた日」もupdated_atもcreated_atも存在しません。ID: ${parsedData.id}, 料理名: ${parsedData.料理名 || parsedData.name || 'なし'}`);
+                            console.warn(`⚠️ データ[${idx}]に「最後に食べた日」もcreated_atも存在しません。ID: ${parsedData.id}, 料理名: ${parsedData.料理名 || parsedData.name || 'なし'}`);
                         }
                         
                         // デバッグログ（最初の3件のみ）
@@ -434,17 +436,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         // フォールバックデータを作成（最低限の情報で表示できるようにする）
                         // スプレッド演算子の代わりにObject.assignを使用：Safari互換性向上
+                        // 注意: updated_atカラムは存在しないため、created_atのみを保存
                         const fallbackData = Object.assign({}, {
                             id: item.id || idx, 
-                            created_at: item.created_at || null,
-                            updated_at: item.updated_at || null
+                            created_at: item.created_at || null
+                            // 将来updated_atカラムが追加された場合のためのメモ:
+                            // updated_at: item.updated_at || null
                         }, fallbackNameData);
                         
                         // 「最後に食べた日」を取得（name列のJSONオブジェクト内から）
                         const fallbackLastEatenDate = fallbackData['最後に食べた日'] || null;
                         
-                        // 表示用の日付を決定: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_atを使用
-                        const dateToDisplay = fallbackLastEatenDate || fallbackData.updated_at || fallbackData.created_at;
+                        // 表示用の日付を決定: 「最後に食べた日」を優先、なければcreated_atを使用
+                        // 注意: updated_atカラムは存在しないため、created_atのみを使用
+                        const dateToDisplay = fallbackLastEatenDate || fallbackData.created_at;
                         
                         // 日付を日本形式に変換（YYYY/MM/DD形式）
                         if (dateToDisplay) {
@@ -454,7 +459,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const [year, month, day] = fallbackLastEatenDate.split('-');
                                     fallbackData.formattedDate = `${year}/${month}/${day}`;
                                 } else {
-                                    // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換（Safari互換性対策）
+                                    // created_atはISO形式なので、Dateオブジェクトに変換（Safari互換性対策）
+                                    // 注意: updated_atカラムは存在しないため、created_atのみを使用
                                     try {
                                         const dateObj = new Date(dateToDisplay);
                                         // Invalid Dateのチェック
@@ -504,21 +510,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(`❌ IDが存在しないデータが${idsWithoutId.length}件あります`);
             }
             
-            // すべてのデータの「最後に食べた日」、updated_at、created_atを確認（デバッグ用）
-            const mealsWithoutDate = allMeals.filter(meal => !meal['最後に食べた日'] && !meal.last_eaten_at && !meal.updated_at && !meal.created_at);
+            // すべてのデータの「最後に食べた日」、created_atを確認（デバッグ用）
+            // 注意: updated_atカラムは存在しないため、created_atのみを確認
+            const mealsWithoutDate = allMeals.filter(meal => !meal['最後に食べた日'] && !meal.last_eaten_at && !meal.created_at);
             if (mealsWithoutDate.length > 0) {
-                console.warn(`⚠️ 「最後に食べた日」もupdated_atもcreated_atも存在しないデータが${mealsWithoutDate.length}件あります`);
+                console.warn(`⚠️ 「最後に食べた日」もcreated_atも存在しないデータが${mealsWithoutDate.length}件あります`);
                 console.warn('⚠️ 日付が存在しないデータのID:', mealsWithoutDate.map(m => m.id));
             }
 
-            // 並べ替え: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_atで降順（最新が上）
+            // 並べ替え: 「最後に食べた日」を優先、なければcreated_atで降順（最新が上）
+            // 注意: updated_atカラムは存在しないため、created_atのみを使用
             // Supabaseで既に並べ替え済みだが、念のためクライアント側でもソート
             console.log('🔄 「最後に食べた日」優先で降順にソート中（最新が上）...');
             allMeals.sort((a, b) => {
                 try {
-                    // 比較用の日付を取得: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_at
-                    const dateA = a['最後に食べた日'] || a.last_eaten_at || a.updated_at || a.created_at;
-                    const dateB = b['最後に食べた日'] || b.last_eaten_at || b.updated_at || b.created_at;
+                    // 比較用の日付を取得: 「最後に食べた日」を優先、なければcreated_atを使用
+                    // 将来updated_atカラムが追加された場合: a.updated_at || a.created_at のように拡張可能
+                    const dateA = a['最後に食べた日'] || a.last_eaten_at || a.created_at;
+                    const dateB = b['最後に食べた日'] || b.last_eaten_at || b.created_at;
                     
                     // 両方ともnull、undefined、空文字列の場合は順序を変えない
                     if ((!dateA || dateA === '') && (!dateB || dateB === '')) return 0;
@@ -536,8 +545,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // 降順（新しい順）：dateObjB - dateObjA
                     const diff = dateObjB - dateObjA;
-                    // NaNが発生しないことを確認
-                    if (isNaN(diff)) return 0;
+                    // NaNが発生しないことを確認（絶対にNaNエラーを回避）
+                    if (isNaN(diff)) {
+                        console.warn('⚠️ ソート処理でNaNが発生しました。dateA:', dateA, 'dateB:', dateB);
+                        return 0; // NaNの場合は順序を変えない
+                    }
                     return diff;
                 } catch (sortError) {
                     // ソート処理でエラーが発生した場合は順序を変えない
@@ -916,10 +928,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // supabase.from('meals').update(...).eq('id', editingId) を実行
                 // name列のみに全データをJSON文字列として保存（必ずJSON.stringifyで保存）
+                // 注意: 現在はname列のみを更新しているが、将来的にupdated_atカラムが追加された場合のためのメモ:
+                // updated_at: new Date().toISOString() // 編集時に自動で更新される日時
                 const { data: updateResult, error } = await supabaseClient
                     .from('meals')
                     .update({ 
                         name: jsonString // JSON.stringify済みの文字列を使用
+                        // 将来updated_atカラムが追加された場合、以下のコメントを解除:
+                        // updated_at: new Date().toISOString()
                     })
                     .eq('id', idToUpdate) // 正しいターゲット指定：今編集しているデータだけを書き換え
                     .select(); // 更新されたデータを返す
@@ -955,10 +971,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // supabase.from('meals').insert を実行（updateではない）
                 // name列のみに全データをJSON文字列として保存（必ずJSON.stringifyで保存）
+                // 注意: 現在はname列のみを保存しているが、将来的にupdated_atカラムが追加された場合のためのメモ:
+                // updated_at: new Date().toISOString() // 編集時に自動で更新される日時
                 const { data: insertData, error } = await supabaseClient
                     .from('meals')
                     .insert({ 
                         name: jsonString // JSON.stringify済みの文字列を使用
+                        // 将来updated_atカラムが追加された場合、以下のコメントを解除:
+                        // updated_at: new Date().toISOString()
                     })
                     .select();
                 
