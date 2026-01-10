@@ -239,23 +239,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 try {
                     console.log(`🔄 データ[${idx}]のパース処理開始: ID=${item.id}`);
+                    console.log(`📝 name列の内容:`, item.name);
+                    console.log(`📝 name列の型:`, typeof item.name);
                     
-                    // name列をJSONパースしてデータを取得（エラーハンドリング強化）
+                    // name列を救済ロジックで処理（古いテキスト形式と新しいJSON形式の両方に対応）
                     let nameData = {};
                     if (item.name) {
                         try {
                             if (typeof item.name === 'string' && item.name.trim() !== '') {
-                                nameData = JSON.parse(item.name);
-                                console.log(`✅ データ[${idx}]のJSONパース成功`);
+                                const trimmedName = item.name.trim();
+                                
+                                // {で始まっていればJSON形式として解析
+                                if (trimmedName.startsWith('{')) {
+                                    try {
+                                        nameData = JSON.parse(trimmedName);
+                                        console.log(`✅ データ[${idx}]のJSONパース成功（JSON形式として認識）`);
+                                    } catch (jsonError) {
+                                        console.error(`❌ データ[${idx}]のJSONパースエラー（{で始まるがJSONとして解析失敗）:`, jsonError);
+                                        // JSONパースに失敗した場合、そのまま「料理名」として扱う
+                                        nameData = {
+                                            料理名: trimmedName
+                                        };
+                                        console.log(`✅ データ[${idx}]をテキスト形式の料理名として扱いました: "${trimmedName}"`);
+                                    }
+                                } else {
+                                    // {で始まらなければ、そのまま「料理名」として扱う（古いテキスト形式）
+                                    nameData = {
+                                        料理名: trimmedName
+                                    };
+                                    console.log(`✅ データ[${idx}]をテキスト形式の料理名として扱いました: "${trimmedName}"`);
+                                }
                             } else {
                                 console.warn(`⚠️ データ[${idx}]のnameが空文字列または無効です`);
                                 nameData = {};
                             }
                         } catch (parseError) {
-                            console.error(`❌ データ[${idx}]のJSONパースエラー:`, parseError);
+                            console.error(`❌ データ[${idx}]のパース処理でエラー:`, parseError);
                             console.error(`❌ name列の内容:`, item.name);
-                            // パースに失敗しても空オブジェクトで続行（画面が真っ白にならないように）
-                            nameData = {};
+                            // パースに失敗しても、そのまま「料理名」として扱う（画面が真っ白にならないように）
+                            if (typeof item.name === 'string' && item.name.trim() !== '') {
+                                nameData = {
+                                    料理名: item.name.trim()
+                                };
+                                console.log(`✅ データ[${idx}]をエラー発生時のフォールバックとして料理名として扱いました: "${item.name.trim()}"`);
+                            } else {
+                                nameData = {};
+                            }
                         }
                     } else {
                         console.warn(`⚠️ データ[${idx}]にname列が存在しません`);
@@ -315,17 +344,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error(`❌ エラー詳細:`, e.message);
                     console.error(`❌ name列の内容:`, item.name);
                     
-                    // フォールバック: name列を再度パースを試みる（エラーハンドリング強化）
+                    // フォールバック: name列を救済ロジックで再処理
                     let fallbackNameData = {};
                     if (item.name) {
                         try {
                             if (typeof item.name === 'string' && item.name.trim() !== '') {
-                                fallbackNameData = JSON.parse(item.name);
-                                console.log(`✅ データ[${idx}]のフォールバックJSONパース成功`);
+                                const trimmedName = item.name.trim();
+                                
+                                // {で始まっていればJSON形式として解析
+                                if (trimmedName.startsWith('{')) {
+                                    try {
+                                        fallbackNameData = JSON.parse(trimmedName);
+                                        console.log(`✅ データ[${idx}]のフォールバックJSONパース成功（JSON形式として認識）`);
+                                    } catch (jsonError2) {
+                                        console.error(`❌ データ[${idx}]のフォールバックJSONパースエラー:`, jsonError2);
+                                        // JSONパースに失敗した場合、そのまま「料理名」として扱う
+                                        fallbackNameData = {
+                                            料理名: trimmedName
+                                        };
+                                        console.log(`✅ データ[${idx}]をフォールバックでテキスト形式の料理名として扱いました: "${trimmedName}"`);
+                                    }
+                                } else {
+                                    // {で始まらなければ、そのまま「料理名」として扱う（古いテキスト形式）
+                                    fallbackNameData = {
+                                        料理名: trimmedName
+                                    };
+                                    console.log(`✅ データ[${idx}]をフォールバックでテキスト形式の料理名として扱いました: "${trimmedName}"`);
+                                }
                             }
                         } catch (parseError2) {
-                            console.error(`❌ データ[${idx}]のフォールバックJSONパースも失敗:`, parseError2);
-                            fallbackNameData = {};
+                            console.error(`❌ データ[${idx}]のフォールバックパース処理も失敗:`, parseError2);
+                            // 最後の手段として、そのまま「料理名」として扱う
+                            if (typeof item.name === 'string' && item.name.trim() !== '') {
+                                fallbackNameData = {
+                                    料理名: item.name.trim()
+                                };
+                                console.log(`✅ データ[${idx}]を最終フォールバックとして料理名として扱いました: "${item.name.trim()}"`);
+                            } else {
+                                fallbackNameData = {};
+                            }
                         }
                     }
                     
@@ -706,6 +763,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const lastEatenAtDate = lastEatenAtISO.split('T')[0]; // YYYY-MM-DD形式に変換
             
             // データオブジェクトを構築（name列に保存する全データ）
+            // 全ての入力（ジャンル、カテゴリー、料理名、材料、メモ）を1つのオブジェクトにまとめる
             const data = {
                 料理名: mealName,
                 メイン食材: mainIngredient || '',
@@ -716,7 +774,14 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             console.log('📝 保存するデータ:', data);
-            console.log('📝 JSON文字列化:', JSON.stringify(data));
+            const jsonString = JSON.stringify(data);
+            console.log('📝 JSON文字列化:', jsonString);
+            
+            // 必ずJSON.stringifyしてname列に保存する（確実にJSON形式で保存）
+            if (!jsonString || jsonString === '{}') {
+                console.error('❌ JSON文字列化に失敗しました');
+                throw new Error('データの保存に失敗しました: JSON形式への変換に失敗しました');
+            }
             
             // --- 保存処理のロジック：新規保存と上書き更新を完全に切り分け ---
             // editingIdが空でない場合は上書き更新、空の場合は新規保存
@@ -736,11 +801,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 // supabase.from('meals').update(...).eq('id', editingId) を実行
-                // name列のみに全データをJSON文字列として保存
+                // name列のみに全データをJSON文字列として保存（必ずJSON.stringifyで保存）
                 const { data: updateResult, error } = await supabaseClient
                     .from('meals')
                     .update({ 
-                        name: JSON.stringify(data)
+                        name: jsonString // JSON.stringify済みの文字列を使用
                     })
                     .eq('id', idToUpdate) // 正しいターゲット指定：今編集しているデータだけを書き換え
                     .select(); // 更新されたデータを返す
@@ -763,7 +828,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('データの更新に失敗しました: データが見つかりませんでした');
                 }
                 
-                alert("修正しました！");
+                // カテゴリーが「海鮮」の場合、特別なメッセージを表示
+                if (selectedCategory === '海鮮') {
+                    alert("海鮮を保存しました");
+                } else {
+                    alert("修正しました！");
+                }
                 
                 // 上書き保存成功後、editingIdを必ずnullに戻す
                 editingId = null;
@@ -777,11 +847,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('📝 editingIdが空のため、新規保存として処理します');
                 
                 // supabase.from('meals').insert を実行（updateではない）
-                // name列のみに全データをJSON文字列として保存
+                // name列のみに全データをJSON文字列として保存（必ずJSON.stringifyで保存）
                 const { data: insertData, error } = await supabaseClient
                     .from('meals')
                     .insert({ 
-                        name: JSON.stringify(data)
+                        name: jsonString // JSON.stringify済みの文字列を使用
                     })
                     .select();
                 
@@ -801,12 +871,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('データの保存に失敗しました');
                 }
                 
-                alert("保存しました！");
+                // カテゴリーが「海鮮」の場合、特別なメッセージを表示
+                if (selectedCategory === '海鮮') {
+                    alert("海鮮を保存しました");
+                } else {
+                    alert("保存しました！");
+                }
             }
 
-            // 保存・更新成功後にデータを再取得して表示を更新（これが一番確実です）
+            // 保存・更新成功後にデータを即座に再取得して表示を更新（これが一番確実です）
             console.log('🔄 データを再取得して画面を更新します...');
-            await fetchMeals(); 
+            await fetchMeals();
+            console.log('✅ リストの再読み込み完了'); 
 
             // フォームのリセット（入力欄を空にし、ボタンを「保存」に戻す）
             // 注意: editingIdは上書き更新の場合は既にnullにリセット済み
