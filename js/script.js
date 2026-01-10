@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchMeals() {
         // バージョン情報ログ（Safariキャッシュ対策用）
-        console.log('📌 プログラム実行中: 2025-01-27 15:30版 (Safari同期テスト)');
+        console.log('📌 プログラム実行中: 2026-01-11 02:30版 (Safari対策済)');
         console.log('🔄 fetchMeals関数が呼び出されました');
         try {
             console.log('🔄 データベースからデータを取得中...');
@@ -312,13 +312,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             nameData = {};
                         }
                         
-                        // パースしたデータを統合
-                        const parsedData = { 
+                        // パースしたデータを統合（スプレッド演算子の代わりにObject.assignを使用：Safari互換性向上）
+                        const parsedData = Object.assign({}, {
                             id: item.id, 
                             created_at: item.created_at || null,
-                            updated_at: item.updated_at || null,
-                            ...nameData
-                        };
+                            updated_at: item.updated_at || null
+                        }, nameData);
                         
                         // 「最後に食べた日」を取得（name列のJSONオブジェクト内から）
                         const lastEatenDate = parsedData['最後に食べた日'] || null;
@@ -335,8 +334,32 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const [year, month, day] = lastEatenDate.split('-');
                                     parsedData.formattedDate = `${year}/${month}/${day}`;
                                 } else {
-                                    // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換
-                                    parsedData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                                    // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換（Safari互換性対策）
+                                    try {
+                                        const dateObj = new Date(dateToDisplay);
+                                        // Invalid Dateのチェック
+                                        if (isNaN(dateObj.getTime())) {
+                                            parsedData.formattedDate = '';
+                                            console.warn(`⚠️ データ[${idx}]の日付が無効です: ${dateToDisplay}`);
+                                        } else {
+                                            // toLocaleDateStringがエラーを起こさないよう、ロケール指定なしで試行
+                                            // Safariで'ja-JP'ロケールが動作しない場合に備えて、手動でフォーマット
+                                            try {
+                                                parsedData.formattedDate = dateObj.toLocaleDateString('ja-JP');
+                                            } catch (localeError) {
+                                                // 'ja-JP'ロケールが使えない場合は、手動でフォーマット
+                                                const year = dateObj.getFullYear();
+                                                let month = String(dateObj.getMonth() + 1);
+                                                let day = String(dateObj.getDate());
+                                                if (month.length < 2) month = '0' + month;
+                                                if (day.length < 2) day = '0' + day;
+                                                parsedData.formattedDate = `${year}/${month}/${day}`;
+                                            }
+                                        }
+                                    } catch (dateParseError) {
+                                        console.error(`❌ 日付オブジェクト変換エラー [${idx}]:`, dateParseError);
+                                        parsedData.formattedDate = '';
+                                    }
                                 }
                                 parsedData.displayDateType = dateType;
                                 parsedData.last_eaten_at = lastEatenDate; // 表示用に保持
@@ -410,12 +433,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         
                         // フォールバックデータを作成（最低限の情報で表示できるようにする）
-                        const fallbackData = { 
+                        // スプレッド演算子の代わりにObject.assignを使用：Safari互換性向上
+                        const fallbackData = Object.assign({}, {
                             id: item.id || idx, 
                             created_at: item.created_at || null,
-                            updated_at: item.updated_at || null,
-                            ...fallbackNameData
-                        };
+                            updated_at: item.updated_at || null
+                        }, fallbackNameData);
                         
                         // 「最後に食べた日」を取得（name列のJSONオブジェクト内から）
                         const fallbackLastEatenDate = fallbackData['最後に食べた日'] || null;
@@ -431,8 +454,32 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const [year, month, day] = fallbackLastEatenDate.split('-');
                                     fallbackData.formattedDate = `${year}/${month}/${day}`;
                                 } else {
-                                    // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換
-                                    fallbackData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                                    // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換（Safari互換性対策）
+                                    try {
+                                        const dateObj = new Date(dateToDisplay);
+                                        // Invalid Dateのチェック
+                                        if (isNaN(dateObj.getTime())) {
+                                            fallbackData.formattedDate = '';
+                                            console.warn(`⚠️ データ[${idx}]（フォールバック）の日付が無効です: ${dateToDisplay}`);
+                                        } else {
+                                            // toLocaleDateStringがエラーを起こさないよう、ロケール指定なしで試行
+                                            // Safariで'ja-JP'ロケールが動作しない場合に備えて、手動でフォーマット
+                                            try {
+                                                fallbackData.formattedDate = dateObj.toLocaleDateString('ja-JP');
+                                            } catch (localeError) {
+                                                // 'ja-JP'ロケールが使えない場合は、手動でフォーマット
+                                                const year = dateObj.getFullYear();
+                                                let month = String(dateObj.getMonth() + 1);
+                                                let day = String(dateObj.getDate());
+                                                if (month.length < 2) month = '0' + month;
+                                                if (day.length < 2) day = '0' + day;
+                                                fallbackData.formattedDate = `${year}/${month}/${day}`;
+                                            }
+                                        }
+                                    } catch (dateParseError) {
+                                        console.error(`❌ 日付オブジェクト変換エラー [${idx}]（フォールバック）:`, dateParseError);
+                                        fallbackData.formattedDate = '';
+                                    }
                                 }
                             } catch (dateError) {
                                 console.error(`❌ 日付変換エラー [${idx}]（フォールバック）:`, dateError);
@@ -468,20 +515,35 @@ document.addEventListener('DOMContentLoaded', () => {
             // Supabaseで既に並べ替え済みだが、念のためクライアント側でもソート
             console.log('🔄 「最後に食べた日」優先で降順にソート中（最新が上）...');
             allMeals.sort((a, b) => {
-                // 比較用の日付を取得: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_at
-                const dateA = a['最後に食べた日'] || a.last_eaten_at || a.updated_at || a.created_at;
-                const dateB = b['最後に食べた日'] || b.last_eaten_at || b.updated_at || b.created_at;
-                
-                // 両方ともnullの場合は順序を変えない
-                if (!dateA && !dateB) return 0;
-                if (!dateA) return 1; // dateAがnullの場合は後ろに
-                if (!dateB) return -1; // dateBがnullの場合は後ろに
-                
-                const dateObjA = new Date(dateA);
-                const dateObjB = new Date(dateB);
-                
-                // 降順（新しい順）：dateObjB - dateObjA
-                return dateObjB - dateObjA;
+                try {
+                    // 比較用の日付を取得: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_at
+                    const dateA = a['最後に食べた日'] || a.last_eaten_at || a.updated_at || a.created_at;
+                    const dateB = b['最後に食べた日'] || b.last_eaten_at || b.updated_at || b.created_at;
+                    
+                    // 両方ともnull、undefined、空文字列の場合は順序を変えない
+                    if ((!dateA || dateA === '') && (!dateB || dateB === '')) return 0;
+                    if (!dateA || dateA === '') return 1; // dateAが無効な場合は後ろに
+                    if (!dateB || dateB === '') return -1; // dateBが無効な場合は後ろに
+                    
+                    // Dateオブジェクトに変換（Invalid Date対策）
+                    const dateObjA = new Date(dateA);
+                    const dateObjB = new Date(dateB);
+                    
+                    // Invalid Dateのチェック（NaNが発生しないように）
+                    if (isNaN(dateObjA.getTime()) && isNaN(dateObjB.getTime())) return 0; // 両方とも無効な場合は順序を変えない
+                    if (isNaN(dateObjA.getTime())) return 1; // dateAが無効な場合は後ろに
+                    if (isNaN(dateObjB.getTime())) return -1; // dateBが無効な場合は後ろに
+                    
+                    // 降順（新しい順）：dateObjB - dateObjA
+                    const diff = dateObjB - dateObjA;
+                    // NaNが発生しないことを確認
+                    if (isNaN(diff)) return 0;
+                    return diff;
+                } catch (sortError) {
+                    // ソート処理でエラーが発生した場合は順序を変えない
+                    console.error('❌ ソート処理エラー:', sortError);
+                    return 0;
+                }
             });
             
             console.log('✅ ソート完了: 最新のデータが一番上に配置されました');
@@ -521,98 +583,114 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         meals.forEach((meal, index) => {
-            const item = document.createElement('div');
-            item.className = 'meal-item';
-            
-            // データの取得
-            const name = meal.料理名 || meal.name || meal.meal_name || '名前なし';
-            const genre = meal.ジャンル || meal.genre || '';
-            const category = meal.カテゴリー || meal.category || '';
-            const mainIngredient = meal.メイン食材 || meal.main_ingredient || '';
-            const memo = meal.メモ || meal.memo || '';
-            
-            // data-category属性を設定（フィルター機能用）
-            if (category) {
-                item.setAttribute('data-category', category);
-            }
-            
-            // ジャンルとカテゴリーのタグを生成
-            let genreTag = '';
-            if (genre) {
-                const genreEmoji = genre === '和食' ? '🍱' : genre === '洋食' ? '🍝' : genre === '中華' ? '🥟' : genre === '麺類' ? '🍜' : '';
-                genreTag = `<span class="genre-tag">${genreEmoji} ${genre}</span>`;
-            }
-            
-            let categoryTag = '';
-            if (category) {
-                const categoryEmoji = category === '牛' ? '🐄' : category === '豚' ? '🐷' : category === '鶏' ? '🐔' : category === '海鮮' ? '🐟' : category === '野菜' ? '🥬' : category === 'その他' ? '🍽️' : '';
-                categoryTag = `<span class="category-tag">${categoryEmoji} ${category}</span>`;
-            }
-            
-            // 日付の取得とフォーマット（YYYY/MM/DD形式に変換）
-            // 「最後に食べた日」を優先、なければformattedDateを使用
-            let dateDisplayText = '';
-            const lastEatenDate = meal['最後に食べた日'] || meal.last_eaten_at;
-            
-            if (lastEatenDate) {
-                try {
-                    // 「最後に食べた日」はYYYY-MM-DD形式なので、そのまま変換
-                    if (typeof lastEatenDate === 'string' && lastEatenDate.includes('-')) {
-                        const [year, month, day] = lastEatenDate.split('-');
-                        dateDisplayText = `${year}/${month}/${day}`;
-                    } else {
-                        // ISO形式の場合はDateオブジェクトに変換
-                        try {
-                            const date = new Date(lastEatenDate);
-                            const year = date.getFullYear();
-                            // Safari互換性: padStartが使えない場合に備えて手動でパディング
-                            let month = String(date.getMonth() + 1);
-                            let day = String(date.getDate());
-                            
-                            // padStartの代替実装（古いSafari対応）
-                            if (String.prototype.padStart) {
-                                month = month.padStart(2, '0');
-                                day = day.padStart(2, '0');
-                            } else {
-                                // padStartが使えない場合の代替処理
-                                if (month.length < 2) month = '0' + month;
-                                if (day.length < 2) day = '0' + day;
-                            }
-                            
-                            dateDisplayText = `${year}/${month}/${day}`;
-                        } catch (dateError) {
-                            console.error(`❌ 日付オブジェクト変換エラー [${index}]:`, dateError);
-                            dateDisplayText = '';
-                        }
-                    }
-                } catch (e) {
-                    console.error(`❌ 日付変換エラー [${index}]:`, e);
-                    dateDisplayText = '';
+            // 1件のデータでエラーが起きても他のデータが表示されるよう、全体をtry-catchで保護
+            try {
+                const item = document.createElement('div');
+                item.className = 'meal-item';
+                
+                // データの取得
+                const name = meal.料理名 || meal.name || meal.meal_name || '名前なし';
+                const genre = meal.ジャンル || meal.genre || '';
+                const category = meal.カテゴリー || meal.category || '';
+                const mainIngredient = meal.メイン食材 || meal.main_ingredient || '';
+                const memo = meal.メモ || meal.memo || '';
+                
+                // data-category属性を設定（フィルター機能用）
+                if (category) {
+                    item.setAttribute('data-category', category);
                 }
-            } else if (meal.formattedDate) {
-                // formattedDateが既に設定されている場合はそれを使用
-                dateDisplayText = meal.formattedDate;
-            }
-            
-            item.innerHTML = `
-                <div class="tag-container">
-                    ${genreTag}
-                    ${categoryTag}
-                </div>
-                <div class="meal-card-content">
-                    <div class="meal-header">
-                        <span class="meal-name">${name}</span>
-                        ${dateDisplayText ? `<span class="meal-date">${dateDisplayText}</span>` : ''}
+                
+                // ジャンルとカテゴリーのタグを生成
+                let genreTag = '';
+                if (genre) {
+                    const genreEmoji = genre === '和食' ? '🍱' : genre === '洋食' ? '🍝' : genre === '中華' ? '🥟' : genre === '麺類' ? '🍜' : '';
+                    genreTag = `<span class="genre-tag">${genreEmoji} ${genre}</span>`;
+                }
+                
+                let categoryTag = '';
+                if (category) {
+                    const categoryEmoji = category === '牛' ? '🐄' : category === '豚' ? '🐷' : category === '鶏' ? '🐔' : category === '海鮮' ? '🐟' : category === '野菜' ? '🥬' : category === 'その他' ? '🍽️' : '';
+                    categoryTag = `<span class="category-tag">${categoryEmoji} ${category}</span>`;
+                }
+                
+                // 日付の取得とフォーマット（YYYY/MM/DD形式に変換）
+                // 「最後に食べた日」を優先、なければformattedDateを使用
+                let dateDisplayText = '';
+                const lastEatenDate = meal['最後に食べた日'] || meal.last_eaten_at;
+                
+                if (lastEatenDate) {
+                    try {
+                        // 「最後に食べた日」はYYYY-MM-DD形式なので、そのまま変換
+                        if (typeof lastEatenDate === 'string' && lastEatenDate.includes('-')) {
+                            const [year, month, day] = lastEatenDate.split('-');
+                            dateDisplayText = `${year}/${month}/${day}`;
+                        } else {
+                            // ISO形式の場合はDateオブジェクトに変換
+                            try {
+                                const date = new Date(lastEatenDate);
+                                // Invalid Dateのチェック（日付が不正な場合は空文字を返す）
+                                if (isNaN(date.getTime())) {
+                                    console.warn(`⚠️ データ[${index}]の日付が無効です: ${lastEatenDate}`);
+                                    dateDisplayText = '';
+                                } else {
+                                    const year = date.getFullYear();
+                                    // Safari互換性: padStartが使えない場合に備えて手動でパディング
+                                    let month = String(date.getMonth() + 1);
+                                    let day = String(date.getDate());
+                                    
+                                    // padStartの代替実装（古いSafari対応）
+                                    if (String.prototype.padStart) {
+                                        month = month.padStart(2, '0');
+                                        day = day.padStart(2, '0');
+                                    } else {
+                                        // padStartが使えない場合の代替処理
+                                        if (month.length < 2) month = '0' + month;
+                                        if (day.length < 2) day = '0' + day;
+                                    }
+                                    
+                                    dateDisplayText = `${year}/${month}/${day}`;
+                                }
+                            } catch (dateError) {
+                                console.error(`❌ 日付オブジェクト変換エラー [${index}]:`, dateError);
+                                dateDisplayText = '';
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`❌ 日付変換エラー [${index}]:`, e);
+                        dateDisplayText = '';
+                    }
+                } else if (meal.formattedDate) {
+                    // formattedDateが既に設定されている場合はそれを使用
+                    dateDisplayText = meal.formattedDate;
+                }
+                
+                item.innerHTML = `
+                    <div class="tag-container">
+                        ${genreTag}
+                        ${categoryTag}
                     </div>
-                    ${mainIngredient ? `<p class="main-ingredient"><strong>メイン食材:</strong> ${mainIngredient}</p>` : ''}
-                    ${memo ? `<p class="memo">${memo}</p>` : ''}
-                </div>
-                <div class="meal-actions">
-                    <button class="edit-btn" data-index="${index}" data-id="${meal.id}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
-                    <button class="delete-btn" data-index="${index}" data-id="${meal.id}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
-                </div>
-            `;
-            mealList.appendChild(item);
+                    <div class="meal-card-content">
+                        <div class="meal-header">
+                            <span class="meal-name">${name}</span>
+                            ${dateDisplayText ? `<span class="meal-date">${dateDisplayText}</span>` : ''}
+                        </div>
+                        ${mainIngredient ? `<p class="main-ingredient"><strong>メイン食材:</strong> ${mainIngredient}</p>` : ''}
+                        ${memo ? `<p class="memo">${memo}</p>` : ''}
+                    </div>
+                    <div class="meal-actions">
+                        <button class="edit-btn" data-index="${index}" data-id="${meal.id || ''}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
+                        <button class="delete-btn" data-index="${index}" data-id="${meal.id || ''}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
+                    </div>
+                `;
+                mealList.appendChild(item);
+            } catch (displayError) {
+                // 1件のデータでエラーが発生しても、他のデータの表示を止めない
+                console.error(`❌ データ[${index}]の表示処理でエラーが発生しました:`, displayError);
+                console.error(`❌ エラー詳細:`, displayError.message);
+                console.error(`❌ エラーが発生したデータ:`, meal);
+                // エラーが発生したアイテムはスキップして、次のアイテムの処理を続行
+                // （forEachループは自動的に続行される）
+            }
         });
     }
 
