@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchMeals() {
         // バージョン情報ログ（Safariキャッシュ対策用）
-        console.log('📌 プログラム実行中: 2026-01-11 03:50版');
+        console.log('📌 プログラム実行中: 2026-01-11 04:20版 (アラート整理済)');
         console.log('🔄 fetchMeals関数が呼び出されました');
         try {
             console.log('🔄 データベースからデータを取得中...');
@@ -865,9 +865,6 @@ document.addEventListener('DOMContentLoaded', () => {
     async function saveMeal() {
         console.log('💾 保存処理開始');
         
-        // 保存処理開始時にアラートを表示
-        alert("保存処理を開始します");
-        
         try {
             console.log(`📝 現在のeditingId: ${editingId} (型: ${typeof editingId})`);
             console.log(`📝 editingIdが空か: ${editingId === null || editingId === undefined || editingId === ''}`);
@@ -999,13 +996,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // 保存完了時にアラートを表示
-            alert("海鮮を保存しました");
-            
-            // 保存・更新成功後は必ずlocation.reload()を実行して画面を強制更新
-            console.log('🔄 画面を強制更新します...');
-            window.location.reload(); 
-
             // フォームのリセット（入力欄を空にし、ボタンを「保存」に戻す）
             // 注意: editingIdは上書き更新の場合は既にnullにリセット済み
             resetForm();
@@ -1015,6 +1005,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn('⚠️ editingIdがリセットされていません。強制的にnullに設定します。');
                 editingId = null;
             }
+            
+            // 保存完了時にアラートを表示（料理名を含む）
+            alert(mealName + "を保存しました");
+            
+            // 保存・更新成功後はfetchMeals()を呼び出してリストだけを更新（画面のちらつきを防ぐ）
+            console.log('🔄 データリストを更新します...');
+            await fetchMeals();
             console.log('✅ 保存処理が完了しました。editingId:', editingId); 
 
         } catch (err) {
