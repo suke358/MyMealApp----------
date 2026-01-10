@@ -184,10 +184,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isNaN(date.getTime())) return '';
             
             const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
+            // Safari互換性: padStartが使えない場合に備えて手動でパディング
+            let month = String(date.getMonth() + 1);
+            let day = String(date.getDate());
+            let hours = String(date.getHours());
+            let minutes = String(date.getMinutes());
+            
+            // padStartの代替実装（古いSafari対応）
+            if (String.prototype.padStart) {
+                month = month.padStart(2, '0');
+                day = day.padStart(2, '0');
+                hours = hours.padStart(2, '0');
+                minutes = minutes.padStart(2, '0');
+            } else {
+                // padStartが使えない場合の代替処理
+                if (month.length < 2) month = '0' + month;
+                if (day.length < 2) day = '0' + day;
+                if (hours.length < 2) hours = '0' + hours;
+                if (minutes.length < 2) minutes = '0' + minutes;
+            }
             
             return `${year}/${month}/${day} ${hours}:${minutes}`;
         } catch (e) {
@@ -197,6 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchMeals() {
+        // バージョン情報ログ（Safariキャッシュ対策用）
+        console.log('📌 プログラム実行中: 2025-01-27 15:30版 (Safari同期テスト)');
         console.log('🔄 fetchMeals関数が呼び出されました');
         try {
             console.log('🔄 データベースからデータを取得中...');
@@ -469,9 +486,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             console.log('✅ ソート完了: 最新のデータが一番上に配置されました');
 
-            // 画面に表示
-            displayMeals(allMeals);
-            console.log('✅ データの読み込みに成功しました（最新順に並べ替え済み）');
+            // 画面に表示（データが1件以上ある場合のみ確認ログを出力）
+            if (allMeals && allMeals.length > 0) {
+                console.log("データ表示処理を開始します: " + allMeals.length + "件");
+                displayMeals(allMeals);
+                console.log('✅ データの読み込みに成功しました（最新順に並べ替え済み）');
+            } else {
+                console.warn('⚠️ allMeals配列が空です。データが取得できていない可能性があります。');
+                displayMeals([]);
+            }
         } catch (error) {
             console.error('❌ 読み込み失敗:', error.message);
             console.error('❌ エラー詳細:', JSON.stringify(error, null, 2));
@@ -539,11 +562,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         dateDisplayText = `${year}/${month}/${day}`;
                     } else {
                         // ISO形式の場合はDateオブジェクトに変換
-                        const date = new Date(lastEatenDate);
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        dateDisplayText = `${year}/${month}/${day}`;
+                        try {
+                            const date = new Date(lastEatenDate);
+                            const year = date.getFullYear();
+                            // Safari互換性: padStartが使えない場合に備えて手動でパディング
+                            let month = String(date.getMonth() + 1);
+                            let day = String(date.getDate());
+                            
+                            // padStartの代替実装（古いSafari対応）
+                            if (String.prototype.padStart) {
+                                month = month.padStart(2, '0');
+                                day = day.padStart(2, '0');
+                            } else {
+                                // padStartが使えない場合の代替処理
+                                if (month.length < 2) month = '0' + month;
+                                if (day.length < 2) day = '0' + day;
+                            }
+                            
+                            dateDisplayText = `${year}/${month}/${day}`;
+                        } catch (dateError) {
+                            console.error(`❌ 日付オブジェクト変換エラー [${index}]:`, dateError);
+                            dateDisplayText = '';
+                        }
                     }
                 } catch (e) {
                     console.error(`❌ 日付変換エラー [${index}]:`, e);
