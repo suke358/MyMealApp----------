@@ -226,221 +226,213 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Supabaseのデータをアプリ用形式に変換
-            allMeals = data.map((item, idx) => {
-                // IDが確実に取得できているか確認
-                if (!item.id) {
-                    console.error(`❌ データ[${idx}]にIDが存在しません:`, item);
-                }
-                
-                // created_atが取得できているか確認（デバッグ用）
-                if (!item.created_at) {
-                    console.warn(`⚠️ データ[${idx}]にcreated_atが存在しません:`, item);
-                }
-                
-                try {
-                    console.log(`🔄 データ[${idx}]のパース処理開始: ID=${item.id}`);
-                    console.log(`📝 name列の内容:`, item.name);
-                    console.log(`📝 name列の型:`, typeof item.name);
-                    
-                    // name列を救済ロジックで処理（古いテキスト形式と新しいJSON形式の両方に対応）
-                    let nameData = {};
-                    if (item.name) {
-                        try {
-                            if (typeof item.name === 'string' && item.name.trim() !== '') {
-                                const trimmedName = item.name.trim();
-                                
-                                // {で始まっていればJSON形式として解析
-                                if (trimmedName.startsWith('{')) {
-                                    try {
-                                        nameData = JSON.parse(trimmedName);
-                                        console.log(`✅ データ[${idx}]のJSONパース成功（JSON形式として認識）`);
-                                    } catch (jsonError) {
-                                        console.error(`❌ データ[${idx}]のJSONパースエラー（{で始まるがJSONとして解析失敗）:`, jsonError);
-                                        // JSONパースに失敗した場合、そのまま「料理名」として扱う
+            // 全体をtry-catchで囲み、1つでもデータの解析に失敗しても他のデータの表示を止めない
+            allMeals = [];
+            if (data && Array.isArray(data)) {
+                data.forEach((item, idx) => {
+                    try {
+                        // IDが確実に取得できているか確認
+                        if (!item.id) {
+                            console.error(`❌ データ[${idx}]にIDが存在しません:`, item);
+                        }
+                        
+                        // created_atが取得できているか確認（デバッグ用）
+                        if (!item.created_at) {
+                            console.warn(`⚠️ データ[${idx}]にcreated_atが存在しません:`, item);
+                        }
+                        
+                        console.log(`🔄 データ[${idx}]のパース処理開始: ID=${item.id}`);
+                        console.log(`📝 name列の内容:`, item.name);
+                        console.log(`📝 name列の型:`, typeof item.name);
+                        
+                        // name列を救済ロジックで処理（古いテキスト形式と新しいJSON形式の両方に対応）
+                        // item.nameが{で始まっていればJSON.parse、そうでなければそのまま「料理名」として表示
+                        let nameData = {};
+                        if (item.name) {
+                            try {
+                                if (typeof item.name === 'string' && item.name.trim() !== '') {
+                                    const trimmedName = item.name.trim();
+                                    
+                                    // {で始まっていればJSON形式として解析
+                                    if (trimmedName.startsWith('{')) {
+                                        try {
+                                            nameData = JSON.parse(trimmedName);
+                                            console.log(`✅ データ[${idx}]のJSONパース成功（JSON形式として認識）`);
+                                        } catch (jsonError) {
+                                            console.error(`❌ データ[${idx}]のJSONパースエラー（{で始まるがJSONとして解析失敗）:`, jsonError);
+                                            // JSONパースに失敗した場合、そのまま「料理名」として扱う
+                                            nameData = {
+                                                料理名: trimmedName
+                                            };
+                                            console.log(`✅ データ[${idx}]をテキスト形式の料理名として扱いました: "${trimmedName}"`);
+                                        }
+                                    } else {
+                                        // {で始まらなければ、そのまま「料理名」として扱う（古いテキスト形式）
                                         nameData = {
                                             料理名: trimmedName
                                         };
                                         console.log(`✅ データ[${idx}]をテキスト形式の料理名として扱いました: "${trimmedName}"`);
                                     }
                                 } else {
-                                    // {で始まらなければ、そのまま「料理名」として扱う（古いテキスト形式）
-                                    nameData = {
-                                        料理名: trimmedName
-                                    };
-                                    console.log(`✅ データ[${idx}]をテキスト形式の料理名として扱いました: "${trimmedName}"`);
+                                    console.warn(`⚠️ データ[${idx}]のnameが空文字列または無効です`);
+                                    nameData = {};
                                 }
-                            } else {
-                                console.warn(`⚠️ データ[${idx}]のnameが空文字列または無効です`);
-                                nameData = {};
+                            } catch (parseError) {
+                                console.error(`❌ データ[${idx}]のパース処理でエラー:`, parseError);
+                                console.error(`❌ name列の内容:`, item.name);
+                                // パースに失敗しても、そのまま「料理名」として扱う（画面が真っ白にならないように）
+                                if (typeof item.name === 'string' && item.name.trim() !== '') {
+                                    nameData = {
+                                        料理名: item.name.trim()
+                                    };
+                                    console.log(`✅ データ[${idx}]をエラー発生時のフォールバックとして料理名として扱いました: "${item.name.trim()}"`);
+                                } else {
+                                    nameData = {};
+                                }
                             }
-                        } catch (parseError) {
-                            console.error(`❌ データ[${idx}]のパース処理でエラー:`, parseError);
-                            console.error(`❌ name列の内容:`, item.name);
-                            // パースに失敗しても、そのまま「料理名」として扱う（画面が真っ白にならないように）
-                            if (typeof item.name === 'string' && item.name.trim() !== '') {
-                                nameData = {
-                                    料理名: item.name.trim()
-                                };
-                                console.log(`✅ データ[${idx}]をエラー発生時のフォールバックとして料理名として扱いました: "${item.name.trim()}"`);
-                            } else {
-                                nameData = {};
-                            }
+                        } else {
+                            console.warn(`⚠️ データ[${idx}]にname列が存在しません`);
+                            nameData = {};
                         }
-                    } else {
-                        console.warn(`⚠️ データ[${idx}]にname列が存在しません`);
-                        nameData = {};
-                    }
-                    
-                    // パースしたデータを統合
-                    const parsedData = { 
-                        id: item.id, 
-                        created_at: item.created_at || null,
-                        updated_at: item.updated_at || null,
-                        ...nameData
-                    };
-                    
-                    // 「最後に食べた日」を取得（name列のJSONオブジェクト内から）
-                    const lastEatenDate = parsedData['最後に食べた日'] || null;
-                    
-                    // 表示用の日付を決定: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_atを使用
-                    const dateToDisplay = lastEatenDate || parsedData.updated_at || parsedData.created_at;
-                    const dateType = lastEatenDate ? '最後に食べた日' : (parsedData.updated_at ? 'updated_at' : 'created_at');
-                    
-                    // 日付を日本形式に変換（YYYY/MM/DD形式）
-                    if (dateToDisplay) {
-                        try {
-                            // 「最後に食べた日」はYYYY-MM-DD形式なので、そのまま使用
-                            if (lastEatenDate) {
-                                const [year, month, day] = lastEatenDate.split('-');
-                                parsedData.formattedDate = `${year}/${month}/${day}`;
-                            } else {
-                                // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換
-                                parsedData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                        
+                        // パースしたデータを統合
+                        const parsedData = { 
+                            id: item.id, 
+                            created_at: item.created_at || null,
+                            updated_at: item.updated_at || null,
+                            ...nameData
+                        };
+                        
+                        // 「最後に食べた日」を取得（name列のJSONオブジェクト内から）
+                        const lastEatenDate = parsedData['最後に食べた日'] || null;
+                        
+                        // 表示用の日付を決定: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_atを使用
+                        const dateToDisplay = lastEatenDate || parsedData.updated_at || parsedData.created_at;
+                        const dateType = lastEatenDate ? '最後に食べた日' : (parsedData.updated_at ? 'updated_at' : 'created_at');
+                        
+                        // 日付を日本形式に変換（YYYY/MM/DD形式）
+                        if (dateToDisplay) {
+                            try {
+                                // 「最後に食べた日」はYYYY-MM-DD形式なので、そのまま使用
+                                if (lastEatenDate) {
+                                    const [year, month, day] = lastEatenDate.split('-');
+                                    parsedData.formattedDate = `${year}/${month}/${day}`;
+                                } else {
+                                    // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換
+                                    parsedData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                                }
+                                parsedData.displayDateType = dateType;
+                                parsedData.last_eaten_at = lastEatenDate; // 表示用に保持
+                                
+                                if (idx < 3) {
+                                    console.log(`📅 データ[${idx}] 日付変換 (${dateType}): ${dateToDisplay} → ${parsedData.formattedDate}`);
+                                }
+                            } catch (e) {
+                                console.error(`❌ 日付変換エラー [${idx}]:`, e);
+                                parsedData.formattedDate = '';
+                                parsedData.displayDateType = null;
                             }
-                            parsedData.displayDateType = dateType;
-                            parsedData.last_eaten_at = lastEatenDate; // 表示用に保持
-                            
-                            if (idx < 3) {
-                                console.log(`📅 データ[${idx}] 日付変換 (${dateType}): ${dateToDisplay} → ${parsedData.formattedDate}`);
-                            }
-                        } catch (e) {
-                            console.error(`❌ 日付変換エラー [${idx}]:`, e);
+                        } else {
                             parsedData.formattedDate = '';
                             parsedData.displayDateType = null;
+                            console.warn(`⚠️ データ[${idx}]に「最後に食べた日」もupdated_atもcreated_atも存在しません。ID: ${parsedData.id}, 料理名: ${parsedData.料理名 || parsedData.name || 'なし'}`);
                         }
-                    } else {
-                        parsedData.formattedDate = '';
-                        parsedData.displayDateType = null;
-                        console.warn(`⚠️ データ[${idx}]に「最後に食べた日」もupdated_atもcreated_atも存在しません。ID: ${parsedData.id}, 料理名: ${parsedData.料理名 || parsedData.name || 'なし'}`);
-                    }
-                    
-                    // デバッグログ（最初の3件のみ）
-                    if (idx < 3) {
-                        console.log(`📝 データ[${idx}]: ID=${parsedData.id}, 日付=${parsedData.formattedDate || 'なし'}, 料理名=${parsedData.料理名 || parsedData.name || 'なし'}`);
-                    }
-                    return parsedData;
-                } catch (e) {
-                    console.error(`❌ データ[${idx}]のパースエラー:`, e);
-                    console.error(`❌ エラー詳細:`, e.message);
-                    console.error(`❌ name列の内容:`, item.name);
-                    
-                    // フォールバック: name列を救済ロジックで再処理
-                    let fallbackNameData = {};
-                    if (item.name) {
-                        try {
-                            if (typeof item.name === 'string' && item.name.trim() !== '') {
-                                const trimmedName = item.name.trim();
-                                
-                                // {で始まっていればJSON形式として解析
-                                if (trimmedName.startsWith('{')) {
-                                    try {
-                                        fallbackNameData = JSON.parse(trimmedName);
-                                        console.log(`✅ データ[${idx}]のフォールバックJSONパース成功（JSON形式として認識）`);
-                                    } catch (jsonError2) {
-                                        console.error(`❌ データ[${idx}]のフォールバックJSONパースエラー:`, jsonError2);
-                                        // JSONパースに失敗した場合、そのまま「料理名」として扱う
+                        
+                        // デバッグログ（最初の3件のみ）
+                        if (idx < 3) {
+                            console.log(`📝 データ[${idx}]: ID=${parsedData.id}, 日付=${parsedData.formattedDate || 'なし'}, 料理名=${parsedData.料理名 || parsedData.name || 'なし'}`);
+                        }
+                        // パース成功したデータを配列に追加
+                        allMeals.push(parsedData);
+                    } catch (e) {
+                        // 1つのデータの解析に失敗しても、他のデータの表示を止めない
+                        console.error(`❌ データ[${idx}]のパースエラー:`, e);
+                        console.error(`❌ エラー詳細:`, e.message);
+                        console.error(`❌ name列の内容:`, item.name);
+                        
+                        // フォールバック: name列を救済ロジックで再処理
+                        let fallbackNameData = {};
+                        if (item.name) {
+                            try {
+                                if (typeof item.name === 'string' && item.name.trim() !== '') {
+                                    const trimmedName = item.name.trim();
+                                    
+                                    // {で始まっていればJSON形式として解析
+                                    if (trimmedName.startsWith('{')) {
+                                        try {
+                                            fallbackNameData = JSON.parse(trimmedName);
+                                            console.log(`✅ データ[${idx}]のフォールバックJSONパース成功（JSON形式として認識）`);
+                                        } catch (jsonError2) {
+                                            console.error(`❌ データ[${idx}]のフォールバックJSONパースエラー:`, jsonError2);
+                                            // JSONパースに失敗した場合、そのまま「料理名」として扱う
+                                            fallbackNameData = {
+                                                料理名: trimmedName
+                                            };
+                                            console.log(`✅ データ[${idx}]をフォールバックでテキスト形式の料理名として扱いました: "${trimmedName}"`);
+                                        }
+                                    } else {
+                                        // {で始まらなければ、そのまま「料理名」として扱う（古いテキスト形式）
                                         fallbackNameData = {
                                             料理名: trimmedName
                                         };
                                         console.log(`✅ データ[${idx}]をフォールバックでテキスト形式の料理名として扱いました: "${trimmedName}"`);
                                     }
-                                } else {
-                                    // {で始まらなければ、そのまま「料理名」として扱う（古いテキスト形式）
+                                }
+                            } catch (parseError2) {
+                                console.error(`❌ データ[${idx}]のフォールバックパース処理も失敗:`, parseError2);
+                                // 最後の手段として、そのまま「料理名」として扱う
+                                if (typeof item.name === 'string' && item.name.trim() !== '') {
                                     fallbackNameData = {
-                                        料理名: trimmedName
+                                        料理名: item.name.trim()
                                     };
-                                    console.log(`✅ データ[${idx}]をフォールバックでテキスト形式の料理名として扱いました: "${trimmedName}"`);
+                                    console.log(`✅ データ[${idx}]を最終フォールバックとして料理名として扱いました: "${item.name.trim()}"`);
+                                } else {
+                                    fallbackNameData = {};
                                 }
                             }
-                        } catch (parseError2) {
-                            console.error(`❌ データ[${idx}]のフォールバックパース処理も失敗:`, parseError2);
-                            // 最後の手段として、そのまま「料理名」として扱う
-                            if (typeof item.name === 'string' && item.name.trim() !== '') {
-                                fallbackNameData = {
-                                    料理名: item.name.trim()
-                                };
-                                console.log(`✅ データ[${idx}]を最終フォールバックとして料理名として扱いました: "${item.name.trim()}"`);
-                            } else {
-                                fallbackNameData = {};
-                            }
                         }
-                    }
-                    
-                    const fallbackData = { 
-                        id: item.id, 
-                        created_at: item.created_at || null,
-                        updated_at: item.updated_at || null,
-                        ...fallbackNameData
-                    };
-                    
-                    // カテゴリーは「海鮮」として統一されています
-                    
-                    // 「最後に食べた日」を取得（name列のJSONオブジェクト内から）
-                    const fallbackLastEatenDate = fallbackData['最後に食べた日'] || null;
-                    
-                    // last_eaten_at、updated_at、created_atが取得できているか確認（デバッグ用）
-                    if (!fallbackLastEatenDate && !fallbackData.updated_at && !fallbackData.created_at) {
-                        console.warn(`⚠️ データ[${idx}]（フォールバック）に「最後に食べた日」もupdated_atもcreated_atも存在しません。ID: ${fallbackData.id}`);
-                    }
-                    
-                    // 表示用の日付を決定: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_atを使用
-                    const dateToDisplay = fallbackLastEatenDate || fallbackData.updated_at || fallbackData.created_at;
-                    const dateType = fallbackLastEatenDate ? '最後に食べた日' : (fallbackData.updated_at ? 'updated_at' : 'created_at');
-                    
-                    // 日付を日本形式に変換（YYYY/MM/DD形式）
-                    if (dateToDisplay) {
-                        try {
-                            // 「最後に食べた日」はYYYY-MM-DD形式なので、そのまま使用
-                            if (fallbackLastEatenDate) {
-                                const [year, month, day] = fallbackLastEatenDate.split('-');
-                                fallbackData.formattedDate = `${year}/${month}/${day}`;
-                            } else {
-                                // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換
-                                fallbackData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                        
+                        // フォールバックデータを作成（最低限の情報で表示できるようにする）
+                        const fallbackData = { 
+                            id: item.id || idx, 
+                            created_at: item.created_at || null,
+                            updated_at: item.updated_at || null,
+                            ...fallbackNameData
+                        };
+                        
+                        // 「最後に食べた日」を取得（name列のJSONオブジェクト内から）
+                        const fallbackLastEatenDate = fallbackData['最後に食べた日'] || null;
+                        
+                        // 表示用の日付を決定: 「最後に食べた日」を優先、なければupdated_at、それもなければcreated_atを使用
+                        const dateToDisplay = fallbackLastEatenDate || fallbackData.updated_at || fallbackData.created_at;
+                        
+                        // 日付を日本形式に変換（YYYY/MM/DD形式）
+                        if (dateToDisplay) {
+                            try {
+                                // 「最後に食べた日」はYYYY-MM-DD形式なので、そのまま使用
+                                if (fallbackLastEatenDate) {
+                                    const [year, month, day] = fallbackLastEatenDate.split('-');
+                                    fallbackData.formattedDate = `${year}/${month}/${day}`;
+                                } else {
+                                    // updated_atやcreated_atはISO形式なので、Dateオブジェクトに変換
+                                    fallbackData.formattedDate = new Date(dateToDisplay).toLocaleDateString('ja-JP');
+                                }
+                            } catch (dateError) {
+                                console.error(`❌ 日付変換エラー [${idx}]（フォールバック）:`, dateError);
+                                fallbackData.formattedDate = '';
                             }
-                            fallbackData.displayDateType = dateType; // 表示に使用した日付の種類を記録
-                            fallbackData.last_eaten_at = fallbackLastEatenDate; // 表示用に保持
-                            if (idx < 3) {
-                                console.log(`📅 データ[${idx}] 日付変換（フォールバック）(${dateType}): ${dateToDisplay} → ${fallbackData.formattedDate}`);
-                            }
-                        } catch (e) {
-                            console.error(`❌ 日付変換エラー [${idx}]（フォールバック）:`, e);
+                        } else {
                             fallbackData.formattedDate = '';
-                            fallbackData.displayDateType = null;
                         }
-                    } else {
-                        fallbackData.formattedDate = '';
-                        fallbackData.displayDateType = null;
-                        console.warn(`⚠️ データ[${idx}]（フォールバック）に「最後に食べた日」もupdated_atもcreated_atも存在しません`);
+                        
+                        // フォールバックデータも配列に追加（エラーがあっても表示を止めない）
+                        allMeals.push(fallbackData);
+                        console.log(`✅ データ[${idx}]をフォールバックデータとして追加しました`);
                     }
-                    
-                    // デバッグログ（最初の3件のみ）
-                    if (idx < 3) {
-                        console.log(`📝 データ[${idx}]: ID=${fallbackData.id}, 日付=${fallbackData.formattedDate || 'なし'}, name=${fallbackData.name || 'なし'}`);
-                    }
-                    return fallbackData;
-                }
-            });
+                });
+            } else {
+                console.warn('⚠️ 取得したデータが配列ではありません');
+            }
 
             // すべてのデータのIDを確認
             const idsWithoutId = allMeals.filter(meal => !meal.id);
@@ -742,6 +734,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     async function saveMeal() {
         console.log('💾 保存処理開始');
+        
+        // 保存処理開始時にアラートを表示
+        alert("保存処理を開始します");
+        
         try {
             console.log(`📝 現在のeditingId: ${editingId} (型: ${typeof editingId})`);
             console.log(`📝 editingIdが空か: ${editingId === null || editingId === undefined || editingId === ''}`);
@@ -828,13 +824,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('データの更新に失敗しました: データが見つかりませんでした');
                 }
                 
-                // カテゴリーが「海鮮」の場合、特別なメッセージを表示
-                if (selectedCategory === '海鮮') {
-                    alert("海鮮を保存しました");
-                } else {
-                    alert("修正しました！");
-                }
-                
                 // 上書き保存成功後、editingIdを必ずnullに戻す
                 editingId = null;
                 console.log('✅ 上書き更新完了後、editingIdをnullにリセットしました');
@@ -870,19 +859,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.warn('⚠️ 保存されたデータが0件です');
                     throw new Error('データの保存に失敗しました');
                 }
-                
-                // カテゴリーが「海鮮」の場合、特別なメッセージを表示
-                if (selectedCategory === '海鮮') {
-                    alert("海鮮を保存しました");
-                } else {
-                    alert("保存しました！");
-                }
             }
-
-            // 保存・更新成功後にデータを即座に再取得して表示を更新（これが一番確実です）
-            console.log('🔄 データを再取得して画面を更新します...');
-            await fetchMeals();
-            console.log('✅ リストの再読み込み完了'); 
+            
+            // 保存完了時にアラートを表示
+            alert("海鮮を保存しました");
+            
+            // 保存・更新成功後は必ずlocation.reload()を実行して画面を強制更新
+            console.log('🔄 画面を強制更新します...');
+            window.location.reload(); 
 
             // フォームのリセット（入力欄を空にし、ボタンを「保存」に戻す）
             // 注意: editingIdは上書き更新の場合は既にnullにリセット済み
