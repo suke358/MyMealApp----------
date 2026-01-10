@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     if (!mealId) {
                         console.error('❌ 削除ボタンにIDが設定されていません');
-                        alert('削除するデータのIDが見つかりません');
+                        showToast('削除するデータのIDが見つかりません');
                         return;
                     }
                     
@@ -174,6 +174,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 内部関数（この中に入れます）
     // ==========================================
+
+    // トースト通知を表示する関数
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        if (!toast) {
+            console.error('❌ トースト要素が見つかりません');
+            // フォールバック: alertを使用
+            alert(message);
+            return;
+        }
+
+        // メッセージを設定
+        toast.textContent = message;
+
+        // 表示アニメーション
+        toast.classList.add('show');
+
+        // 3秒後に自動で非表示
+        setTimeout(() => {
+            toast.classList.remove('show');
+            // アニメーション完了後にメッセージをクリア
+            setTimeout(() => {
+                toast.textContent = '';
+            }, 300); // アニメーション時間と同期
+        }, 3000);
+    }
 
     // 日付フォーマット関数: DBから取得した日付を「2024/01/10 12:30」形式に変換
     function formatDateTime(dateString) {
@@ -213,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchMeals() {
         // バージョン情報ログ（Safariキャッシュ対策用）
-        console.log('📌 プログラム実行中: 2026-01-11 04:20版 (アラート整理済)');
+        console.log('📌 プログラム実行中: 2026-01-11 05:00版 (トースト通知実装済)');
         console.log('🔄 fetchMeals関数が呼び出されました');
         try {
             console.log('🔄 データベースからデータを取得中...');
@@ -711,7 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`📝 editMeal関数が呼び出されました (index: ${index})`);
         if (index < 0 || index >= allMeals.length) {
             console.error(`❌ 無効なインデックス: ${index} (allMeals.length: ${allMeals.length})`);
-            alert('編集するデータが見つかりません');
+            showToast('編集するデータが見つかりません');
             return;
         }
         const meal = allMeals[index];
@@ -721,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const mealId = meal.id;
         if (!mealId) {
             console.error('❌ 編集対象のデータにIDが存在しません:', meal);
-            alert('編集するデータにIDが見つかりません');
+            showToast('編集するデータにIDが見つかりません');
             return;
         }
         console.log(`📝 編集対象のID: ${mealId} (型: ${typeof mealId})`);
@@ -876,7 +902,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // バリデーション
             if (!mealName) {
-                alert('料理名を入力してください');
+                showToast('料理名を入力してください');
+                return;
                 return;
             }
             
@@ -1006,8 +1033,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 editingId = null;
             }
             
-            // 保存完了時にアラートを表示（料理名を含む）
-            alert(mealName + "を保存しました");
+            // 保存完了時にトースト通知を表示（料理名を含む）
+            showToast(mealName + "を保存しました");
             
             // 保存・更新成功後はfetchMeals()を呼び出してリストだけを更新（画面のちらつきを防ぐ）
             console.log('🔄 データリストを更新します...');
@@ -1016,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (err) {
             console.error('❌ 保存処理中にエラー:', err);
-            alert('エラーが発生しました: ' + err.message);
+            showToast('エラーが発生しました: ' + err.message);
         }
     }
 
@@ -1070,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // IDのバリデーション
         if (!mealId) {
             console.error('❌ IDが指定されていません');
-            alert('削除するデータのIDが見つかりません');
+            showToast('削除するデータのIDが見つかりません');
             return;
         }
         
@@ -1146,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('❌ 元のID:', mealId, '(型:', typeof mealId, ')');
                 
                 // ユーザーにエラーを通知
-                alert('削除に失敗しました: ' + error.message);
+                showToast('削除に失敗しました: ' + error.message);
                 return;
             }
 
@@ -1160,7 +1187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await fetchMeals();
                 
                 console.log('✅ 削除処理が完了しました');
-                alert('削除しました！');
+                showToast('削除しました！');
             } else {
                 // 削除されたデータが0件の場合（削除ポリシーで拒否された可能性）
                 console.warn('⚠️ 削除されたデータが0件です');
@@ -1174,7 +1201,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('❌ 削除ポリシーの設定を確認してください');
                 }
                 
-                alert('削除に失敗しました: データが見つかりませんでした。削除ポリシーを確認してください。');
+                showToast('削除に失敗しました: データが見つかりませんでした。削除ポリシーを確認してください。');
                 return;
             }
             
@@ -1186,7 +1213,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('❌ 削除対象ID:', idToDelete, '(型:', typeof idToDelete, ')');
             console.error('❌ 元のID:', mealId, '(型:', typeof mealId, ')');
             
-            alert('削除中にエラーが発生しました: ' + err.message);
+            showToast('削除中にエラーが発生しました: ' + err.message);
         }
     }
 

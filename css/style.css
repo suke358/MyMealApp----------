@@ -787,3 +787,43 @@ textarea {
         align-items: flex-start;
     }
 }
+
+/* ==========================================
+   トースト通知のスタイル
+   ========================================== */
+#toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(0, 0, 0, 0.85);
+    color: #ffffff;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 90%;
+    text-align: center;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+#toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+/* モバイル向けの調整 */
+@media (max-width: 768px) {
+    #toast {
+        bottom: 15px;
+        padding: 14px 20px;
+        font-size: 14px;
+        max-width: 85%;
+    }
+}
