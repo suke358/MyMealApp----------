@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchMeals() {
         // バージョン情報ログ（Safariキャッシュ対策用）
-        console.log('📌 プログラム実行中: 2026-01-11 03:15版 (DBカラム不一致修正済)');
+        console.log('📌 プログラム実行中: 2026-01-11 03:50版');
         console.log('🔄 fetchMeals関数が呼び出されました');
         try {
             console.log('🔄 データベースからデータを取得中...');
