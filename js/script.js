@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchMeals() {
         // バージョン情報ログ（Safariキャッシュ対策用）
-        console.log('📌 プログラム実行中: 2026-01-11 05:00版 (トースト通知実装済)');
+        console.log('📌 プログラム実行中: 2026-01-11 05:00版 (UI向上・自動フォーカス実装済)');
         console.log('🔄 fetchMeals関数が呼び出されました');
         try {
             console.log('🔄 データベースからデータを取得中...');
@@ -1033,12 +1033,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 editingId = null;
             }
             
+            // 入力欄をクリア（念のため明示的に）
+            const mealNameInput = document.getElementById('mealName');
+            const mainIngredientInput = document.getElementById('mainIngredient');
+            const memoInput = document.getElementById('memo');
+            
+            if (mealNameInput) mealNameInput.value = '';
+            if (mainIngredientInput) mainIngredientInput.value = '';
+            if (memoInput) memoInput.value = '';
+            
             // 保存完了時にトースト通知を表示（料理名を含む）
             showToast(mealName + "を保存しました");
             
             // 保存・更新成功後はfetchMeals()を呼び出してリストだけを更新（画面のちらつきを防ぐ）
             console.log('🔄 データリストを更新します...');
             await fetchMeals();
+            
+            // 保存直後に入力欄にカーソルを自動で戻す（ユーザー体験向上）
+            if (mealNameInput) {
+                mealNameInput.focus();
+                console.log('✅ 入力欄にフォーカスを戻しました');
+            }
+            
             console.log('✅ 保存処理が完了しました。editingId:', editingId); 
 
         } catch (err) {
