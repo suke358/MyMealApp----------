@@ -565,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchMeals() {
         // バージョン情報ログ（Safariキャッシュ対策用）
-        console.log('📌 プログラム実行中: 2026-01-12 00:05版 (ジャンル・カテゴリー階層検索実装)');
+        console.log('📌 プログラム実行中: 2026-01-12 00:15版 (重複防止・ボタン右寄せ済)');
         console.log('🔄 fetchMeals関数が呼び出されました');
         try {
             console.log('🔄 データベースからデータを取得中...');
@@ -1311,6 +1311,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('料理名を入力してください');
                 return;
                 return;
+            }
+            
+            // 重複チェック（新規保存時のみ）
+            if (!editingId || editingId === null || editingId === undefined || editingId === '') {
+                // 料理名を正規化（前後の空白を削除し、小文字に変換）
+                const normalizedMealName = mealName.trim().toLowerCase();
+                
+                // 既存の料理名と比較（大文字・小文字、前後の空白を無視）
+                const duplicateMeal = allMeals.find(meal => {
+                    const existingMealName = (meal.料理名 || meal.name || meal.meal_name || '').trim().toLowerCase();
+                    return existingMealName === normalizedMealName;
+                });
+                
+                if (duplicateMeal) {
+                    console.warn('⚠️ 重複する料理名が見つかりました:', mealName);
+                    showToast('その料理名は既に登録されています');
+                    return;
+                }
+                console.log('✅ 重複チェック完了: 新しい料理名です');
             }
             
             // 自動記録: 保存ボタンを押した瞬間の日時を取得（ISO形式）

@@ -570,11 +570,19 @@ textarea {
     width: 100%;
 }
 
+.meal-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .meal-header-right {
     display: flex;
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+    margin-left: auto;
 }
 
 /* カード内の料理名 */
