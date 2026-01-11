@@ -14,6 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let editingIndex = null;
     let editingId = null; // 編集対象のSupabase ID
     let allMeals = [];
+    let modalSelectedGenre = ''; // モーダル内のジャンル選択状態
+    let modalSelectedCategory = ''; // モーダル内のカテゴリー選択状態
+    let activeGenre = ''; // 現在選択中のジャンル（フィルター用）
+    let activeCategory = ''; // 現在選択中のカテゴリー（フィルター用）
 
     // ==========================================
     // 初期化処理
@@ -81,24 +85,86 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('❌ 検索入力欄（id="searchInput"）が見つかりません');
     }
 
-    // フィルターボタン（チップ）をクリックした時の処理
-    document.querySelectorAll('.filter-chip').forEach(button => {
+    // ==========================================
+    // 階層的フィルター処理
+    // ==========================================
+    // ジャンルボタンのイベントリスナー
+    document.querySelectorAll('.genre-chip').forEach(button => {
         button.addEventListener('click', () => {
-            // アクティブな色の切り替え
-            document.querySelectorAll('.filter-chip').forEach(btn => btn.classList.remove('active'));
+            const genre = button.getAttribute('data-genre') || '';
+            
+            // ジャンルボタンのアクティブ状態を切り替え
+            document.querySelectorAll('.genre-chip').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
-
-            const filterValue = button.getAttribute('data-filter');
-            filterList(filterValue); // リストを絞り込む関数を呼ぶ
+            
+            activeGenre = genre;
+            console.log('🔍 ジャンルを選択しました:', genre || 'すべて');
+            
+            // ジャンルを「すべて」に戻すとカテゴリーもリセット
+            if (!genre) {
+                activeCategory = '';
+                // カテゴリーボタンのアクティブ状態をリセット
+                document.querySelectorAll('.category-chip').forEach(btn => btn.classList.remove('active'));
+                const allCategoryBtn = document.querySelector('.category-chip[data-category=""]');
+                if (allCategoryBtn) {
+                    allCategoryBtn.classList.add('active');
+                }
+            }
+            
+            // 即座に検索（フィルタリング）を実行
+            applyHierarchicalFilter();
         });
     });
-
-    function filterList(category) {
-        const items = document.querySelectorAll('.meal-item');
-        items.forEach(item => {
-            const itemCategory = item.getAttribute('data-category'); 
-            item.style.display = (category === 'all' || itemCategory === category) ? 'block' : 'none';
+    
+    // カテゴリーボタンのイベントリスナー
+    document.querySelectorAll('.category-chip').forEach(button => {
+        button.addEventListener('click', () => {
+            const category = button.getAttribute('data-category') || '';
+            
+            // カテゴリーボタンのアクティブ状態を切り替え
+            document.querySelectorAll('.category-chip').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            activeCategory = category;
+            console.log('🔍 カテゴリーを選択しました:', category || 'すべて');
+            
+            // 選択中のジャンルでさらに絞り込みを実行
+            applyHierarchicalFilter();
         });
+    });
+    
+    // 階層的フィルタリングを実行する関数
+    function applyHierarchicalFilter() {
+        console.log('🔍 階層的フィルタリングを実行します');
+        console.log(`🔍 選択中のジャンル: "${activeGenre || 'すべて'}", カテゴリー: "${activeCategory || 'すべて'}"`);
+        
+        // 検索入力欄の値も取得
+        const searchInput = document.getElementById('searchInput');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        
+        let filteredMeals = allMeals.filter(meal => {
+            // 検索語でのフィルタリング
+            const matchesSearch = !searchTerm ||
+                (meal.料理名 && meal.料理名.toLowerCase().includes(searchTerm)) ||
+                (meal.メイン食材 && meal.メイン食材.toLowerCase().includes(searchTerm)) ||
+                (meal.メモ && meal.メモ.toLowerCase().includes(searchTerm)) ||
+                (meal.ジャンル && meal.ジャンル.toLowerCase().includes(searchTerm));
+            
+            // ジャンルでのフィルタリング
+            const mealGenre = meal.ジャンル || meal.genre || '';
+            const matchesGenre = !activeGenre || mealGenre === activeGenre;
+            
+            // カテゴリーでのフィルタリング
+            const mealCategory = meal.カテゴリー || meal.category || '';
+            const matchesCategory = !activeCategory || mealCategory === activeCategory;
+            
+            return matchesSearch && matchesGenre && matchesCategory;
+        });
+        
+        console.log(`🔍 フィルタリング結果: ${filteredMeals.length}件`);
+        
+        // 結果を表示
+        displayMeals(filteredMeals);
     }
 
     // おすすめボタン
@@ -166,6 +232,266 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('❌ mealsList要素が見つかりません');
     }
 
+    // ==========================================
+    // モーダル初期化処理
+    // ==========================================
+    const editModal = document.getElementById('editModal');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+    const modalUpdateBtn = document.getElementById('modalUpdateBtn');
+    const modalOverlay = document.querySelector('.modal-overlay');
+    const modalGenreBtns = document.querySelectorAll('.modal-genre-btn');
+    const modalCategoryBtns = document.querySelectorAll('.modal-category-btn');
+    
+    // モーダル内のジャンルボタンのイベントリスナー
+    if (modalGenreBtns && modalGenreBtns.length > 0) {
+        modalGenreBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                modalGenreBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                modalSelectedGenre = this.dataset.genre;
+                console.log('✅ モーダル内でジャンルを選択しました:', modalSelectedGenre);
+            });
+        });
+    }
+    
+    // モーダル内のカテゴリーボタンのイベントリスナー
+    if (modalCategoryBtns && modalCategoryBtns.length > 0) {
+        modalCategoryBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                modalCategoryBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                modalSelectedCategory = this.dataset.category;
+                console.log('✅ モーダル内でカテゴリーを選択しました:', modalSelectedCategory);
+            });
+        });
+    }
+    
+    // モーダルを閉じる処理
+    function closeEditModal() {
+        if (editModal) {
+            editModal.classList.remove('show');
+            // モーダル内の選択状態をリセット
+            modalSelectedGenre = '';
+            modalSelectedCategory = '';
+            editingId = null;
+            editingIndex = null;
+            console.log('✅ モーダルを閉じました');
+        }
+    }
+    
+    // モーダルを開く処理
+    function openEditModal() {
+        if (editModal) {
+            editModal.classList.add('show');
+            // 料理名の入力欄にフォーカス
+            setTimeout(() => {
+                const modalMealNameInput = document.getElementById('modalMealName');
+                if (modalMealNameInput) {
+                    modalMealNameInput.focus();
+                    console.log('✅ モーダル内の料理名入力欄にフォーカスを当てました');
+                }
+            }, 100); // アニメーション後にフォーカス
+            console.log('✅ モーダルを開きました');
+        }
+    }
+    
+    // モーダルを閉じるボタンのイベントリスナー
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', () => {
+            closeEditModal();
+        });
+    }
+    
+    // モーダルのキャンセルボタンのイベントリスナー
+    if (modalCancelBtn) {
+        modalCancelBtn.addEventListener('click', () => {
+            closeEditModal();
+        });
+    }
+    
+    // 背景の暗い部分をクリックしたらモーダルを閉じる
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeEditModal();
+            }
+        });
+    }
+    
+    // ESCキーでモーダルを閉じる
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (editModal && editModal.classList.contains('show')) {
+                closeEditModal();
+            }
+            if (searchModal && searchModal.classList.contains('show')) {
+                closeSearchModal();
+            }
+        }
+    });
+    
+    // モーダル内の更新ボタンのイベントリスナー
+    if (modalUpdateBtn) {
+        modalUpdateBtn.addEventListener('click', async () => {
+            await updateMealFromModal();
+        });
+    }
+    
+    // ==========================================
+    // 検索モーダル初期化処理
+    // ==========================================
+    const searchModal = document.getElementById('searchModal');
+    const searchModalCloseBtn = document.getElementById('searchModalCloseBtn');
+    const searchModalCancelBtn = document.getElementById('searchModalCancelBtn');
+    const searchModalSearchBtn = document.getElementById('searchModalSearchBtn');
+    const searchModalOverlay = searchModal ? searchModal.querySelector('.modal-overlay') : null;
+    const searchIconBtn = document.getElementById('searchIconBtn');
+    const searchGenreSelect = document.getElementById('searchGenre');
+    const searchCategorySelect = document.getElementById('searchCategory');
+    
+    // 検索モーダルを閉じる処理
+    function closeSearchModal() {
+        if (searchModal) {
+            searchModal.classList.remove('show');
+            // 検索条件をリセット
+            if (searchGenreSelect) searchGenreSelect.value = '';
+            if (searchCategorySelect) searchCategorySelect.value = '';
+            console.log('✅ 検索モーダルを閉じました');
+        }
+    }
+    
+    // 検索モーダルを開く処理
+    function openSearchModal() {
+        if (searchModal) {
+            searchModal.classList.add('show');
+            console.log('✅ 検索モーダルを開きました');
+        }
+    }
+    
+    // 検索アイコンボタンのイベントリスナー
+    if (searchIconBtn) {
+        searchIconBtn.style.cursor = 'pointer';
+        searchIconBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openSearchModal();
+        });
+    }
+    
+    // 検索モーダルを閉じるボタンのイベントリスナー
+    if (searchModalCloseBtn) {
+        searchModalCloseBtn.addEventListener('click', () => {
+            closeSearchModal();
+        });
+    }
+    
+    // 検索モーダルのキャンセルボタンのイベントリスナー
+    if (searchModalCancelBtn) {
+        searchModalCancelBtn.addEventListener('click', () => {
+            closeSearchModal();
+        });
+    }
+    
+    // 検索モーダルの背景をクリックしたら閉じる
+    if (searchModalOverlay) {
+        searchModalOverlay.addEventListener('click', (e) => {
+            if (e.target === searchModalOverlay) {
+                closeSearchModal();
+            }
+        });
+    }
+    
+    // 検索モーダル内の検索ボタンのイベントリスナー
+    if (searchModalSearchBtn) {
+        searchModalSearchBtn.addEventListener('click', () => {
+            performModalSearch();
+        });
+    }
+    
+    // ジャンルを選ぶと、カテゴリーの選択肢を更新（階層化）
+    if (searchGenreSelect) {
+        searchGenreSelect.addEventListener('change', (e) => {
+            const selectedGenre = e.target.value;
+            updateCategoryOptions(selectedGenre);
+        });
+    }
+    
+    // カテゴリーの選択肢を更新する関数
+    function updateCategoryOptions(genre) {
+        if (!searchCategorySelect) return;
+        
+        // すべてのカテゴリーを表示（現在のデータ構造では全カテゴリーがどのジャンルでも使える）
+        // 将来的にジャンルごとに異なるカテゴリーを表示する場合は、ここで条件分岐
+        const allCategories = [
+            { value: '', label: 'すべて' },
+            { value: '牛', label: '🐄 牛' },
+            { value: '豚', label: '🐷 豚' },
+            { value: '鶏', label: '🐔 鶏' },
+            { value: '海鮮', label: '🐟 海鮮' },
+            { value: '野菜', label: '🥬 野菜' },
+            { value: 'その他', label: '🍽️ その他' }
+        ];
+        
+        // Selectメニューをクリア
+        searchCategorySelect.innerHTML = '';
+        
+        // オプションを追加
+        allCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.value;
+            option.textContent = cat.label;
+            searchCategorySelect.appendChild(option);
+        });
+        
+        console.log(`✅ ジャンル「${genre || 'すべて'}」に応じてカテゴリーを更新しました`);
+    }
+    
+    // モーダル内での検索処理
+    function performModalSearch() {
+        console.log('🔍 モーダル内での検索処理開始');
+        
+        const selectedGenre = searchGenreSelect ? searchGenreSelect.value : '';
+        const selectedCategory = searchCategorySelect ? searchCategorySelect.value : '';
+        
+        console.log(`🔍 検索条件 - ジャンル: "${selectedGenre}", カテゴリー: "${selectedCategory}"`);
+        
+        // 検索条件でフィルタリング
+        let filteredMeals = allMeals.filter(meal => {
+            const mealGenre = meal.ジャンル || meal.genre || '';
+            const mealCategory = meal.カテゴリー || meal.category || '';
+            
+            // ジャンルでフィルタリング
+            const matchesGenre = !selectedGenre || mealGenre === selectedGenre;
+            
+            // カテゴリーでフィルタリング
+            const matchesCategory = !selectedCategory || mealCategory === selectedCategory;
+            
+            return matchesGenre && matchesCategory;
+        });
+        
+        console.log(`🔍 検索結果: ${filteredMeals.length}件`);
+        
+        // 結果を表示
+        displayMeals(filteredMeals);
+        
+        // モーダルを閉じる
+        closeSearchModal();
+        
+        // トースト通知を表示
+        if (selectedGenre || selectedCategory) {
+            let searchCondition = '';
+            if (selectedGenre) searchCondition += `ジャンル: ${selectedGenre}`;
+            if (selectedCategory) {
+                if (searchCondition) searchCondition += ', ';
+                searchCondition += `カテゴリー: ${selectedCategory}`;
+            }
+            showToast(`検索結果: ${filteredMeals.length}件 (${searchCondition})`);
+        } else {
+            showToast('すべての料理を表示しました');
+        }
+    }
+    
     // ==========================================
     // 4. データ取得の開始（ここが重要！）
     // ==========================================
@@ -239,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchMeals() {
         // バージョン情報ログ（Safariキャッシュ対策用）
-        console.log('📌 プログラム実行中: 2026-01-11 05:00版 (UI向上・自動フォーカス実装済)');
+        console.log('📌 プログラム実行中: 2026-01-12 00:05版 (ジャンル・カテゴリー階層検索実装)');
         console.log('🔄 fetchMeals関数が呼び出されました');
         try {
             console.log('🔄 データベースからデータを取得中...');
@@ -636,6 +962,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 // data-category属性を設定（フィルター機能用）
                 if (category) {
                     item.setAttribute('data-category', category);
+                    // カテゴリに応じたクラスを追加（背景色分け用）
+                    if (category === '牛' || category === '豚' || category === '鶏') {
+                        item.classList.add('category-meat');
+                    } else if (category === '海鮮') {
+                        item.classList.add('category-seafood');
+                    } else if (category === '野菜' || category === 'その他') {
+                        item.classList.add('category-vegetable-other');
+                    }
                 }
                 
                 // ジャンルとカテゴリーのタグを生成
@@ -648,7 +982,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 let categoryTag = '';
                 if (category) {
                     const categoryEmoji = category === '牛' ? '🐄' : category === '豚' ? '🐷' : category === '鶏' ? '🐔' : category === '海鮮' ? '🐟' : category === '野菜' ? '🥬' : category === 'その他' ? '🍽️' : '';
-                    categoryTag = `<span class="category-tag">${categoryEmoji} ${category}</span>`;
+                    // カテゴリに応じたクラスを追加（色分け用）
+                    let categoryClass = 'category-tag';
+                    if (category === '牛' || category === '豚' || category === '鶏') {
+                        categoryClass += ' category-meat-tag';
+                    } else if (category === '海鮮') {
+                        categoryClass += ' category-seafood-tag';
+                    } else if (category === '野菜' || category === 'その他') {
+                        categoryClass += ' category-vegetable-other-tag';
+                    }
+                    categoryTag = `<span class="${categoryClass}">${categoryEmoji} ${category}</span>`;
                 }
                 
                 // 日付の取得とフォーマット（YYYY/MM/DD形式に変換）
@@ -710,14 +1053,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="meal-card-content">
                         <div class="meal-header">
                             <span class="meal-name">${name}</span>
-                            ${dateDisplayText ? `<span class="meal-date">${dateDisplayText}</span>` : ''}
+                            <div class="meal-header-right">
+                                ${dateDisplayText ? `<span class="meal-date">${dateDisplayText}</span>` : ''}
+                                <div class="meal-actions">
+                                    <button class="edit-btn" data-index="${index}" data-id="${meal.id || ''}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
+                                    <button class="delete-btn" data-index="${index}" data-id="${meal.id || ''}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
+                                </div>
+                            </div>
                         </div>
                         ${mainIngredient ? `<p class="main-ingredient"><strong>メイン食材:</strong> ${mainIngredient}</p>` : ''}
                         ${memo ? `<p class="memo">${memo}</p>` : ''}
-                    </div>
-                    <div class="meal-actions">
-                        <button class="edit-btn" data-index="${index}" data-id="${meal.id || ''}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
-                        <button class="delete-btn" data-index="${index}" data-id="${meal.id || ''}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
                     </div>
                 `;
                 mealList.appendChild(item);
@@ -732,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 新しく追加：編集を実行する関数
+    // 新しく追加：編集を実行する関数（モーダル表示）
     function editMeal(index) {
         console.log(`📝 editMeal関数が呼び出されました (index: ${index})`);
         if (index < 0 || index >= allMeals.length) {
@@ -752,92 +1097,60 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         console.log(`📝 編集対象のID: ${mealId} (型: ${typeof mealId})`);
         
-        // フォームに値をセット
-        document.getElementById('mealName').value = meal.料理名 || meal.name || meal.meal_name || '';
-        document.getElementById('mainIngredient').value = meal.メイン食材 || meal.main_ingredient || '';
-        document.getElementById('memo').value = meal.メモ || meal.memo || '';
-        
-        // ジャンルボタンの選択状態をリセットし、該当するものをアクティブに
-        const genre = meal.ジャンル || meal.genre || '';
-        genreOptions.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.genre === genre) {
-                btn.classList.add('active');
-            }
-        });
-        selectedGenre = genre;
-        
-        // カテゴリーボタンの選択状態をリセットし、該当するものをアクティブに
-        const category = meal.カテゴリー || meal.category || '';
-        categoryOptions.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.category === category) {
-                btn.classList.add('active');
-            }
-        });
-        selectedCategory = category;
-        
         // 編集モードに設定
         editingIndex = index;
         editingId = mealId; // SupabaseのIDを保存（これが重要！）
         console.log(`📝 editingIdを設定しました: ${editingId} (型: ${typeof editingId})`);
         
-        // 保存ボタンのテキストを「更新」に変更
-        const saveButton = document.getElementById('saveButton');
-        if (saveButton) {
-            saveButton.textContent = '更新';
-            console.log('✅ 保存ボタンを「更新」に変更しました');
-        } else {
-            console.error('❌ 保存ボタンが見つかりません');
+        // モーダル内のフォームに値をセット
+        const modalMealName = document.getElementById('modalMealName');
+        const modalMainIngredient = document.getElementById('modalMainIngredient');
+        const modalMemo = document.getElementById('modalMemo');
+        
+        if (modalMealName) {
+            modalMealName.value = meal.料理名 || meal.name || meal.meal_name || '';
+        }
+        if (modalMainIngredient) {
+            modalMainIngredient.value = meal.メイン食材 || meal.main_ingredient || '';
+        }
+        if (modalMemo) {
+            modalMemo.value = meal.メモ || meal.memo || '';
         }
         
-        // 画面のスクロールを完全に防ぐ
-        // event.preventDefault()は既にイベントリスナーで実行されているが、
-        // 念のためここでも確認
+        // モーダル内のジャンルボタンの選択状態をリセットし、該当するものをアクティブに
+        const genre = meal.ジャンル || meal.genre || '';
+        modalSelectedGenre = genre;
+        modalGenreBtns.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.genre === genre) {
+                btn.classList.add('active');
+            }
+        });
         
-        console.log('✅ 編集モードに移行しました');
+        // モーダル内のカテゴリーボタンの選択状態をリセットし、該当するものをアクティブに
+        const category = meal.カテゴリー || meal.category || '';
+        modalSelectedCategory = category;
+        modalCategoryBtns.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.category === category) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // モーダルを開く
+        openEditModal();
+        
+        console.log('✅ 編集モーダルを開きました');
         console.log(`✅ 現在のeditingId: ${editingId}`);
     }
 
     // ==========================================
-    // 検索・フィルター処理
+    // 検索・フィルター処理（検索入力欄用）
     // ==========================================
     function filterMeals() {
-        console.log('🔍 filterMeals関数が呼び出されました');
-        const searchInput = document.getElementById('searchInput');
-        if (!searchInput) {
-            console.error('❌ 検索入力欄が見つかりません');
-            return;
-        }
-        const searchTerm = searchInput.value.toLowerCase();
-        const activeFilterChip = document.querySelector('.filter-chip.active');
-        if (!activeFilterChip) {
-            console.error('❌ アクティブなフィルターチップが見つかりません');
-            return;
-        }
-        const activeFilter = activeFilterChip.dataset.filter;
-        console.log(`🔍 検索語: "${searchTerm}", フィルター: "${activeFilter}"`);
-
-        let filteredMeals = allMeals.filter(meal => {
-            const matchesSearch = !searchTerm ||
-                (meal.料理名 && meal.料理名.toLowerCase().includes(searchTerm)) ||
-                (meal.メイン食材 && meal.メイン食材.toLowerCase().includes(searchTerm)) ||
-                (meal.メモ && meal.メモ.toLowerCase().includes(searchTerm)) ||
-                (meal.ジャンル && meal.ジャンル.toLowerCase().includes(searchTerm));
-
-            const mealCategory = meal.カテゴリー || meal.category || '';
-            const matchesFilter = activeFilter === 'all' ||
-                (activeFilter === '牛' && mealCategory === '牛') ||
-                (activeFilter === '豚' && mealCategory === '豚') ||
-                (activeFilter === '鶏' && mealCategory === '鶏') ||
-                (activeFilter === '海鮮' && mealCategory === '海鮮') ||
-                (activeFilter === '野菜' && mealCategory === '野菜') ||
-                (activeFilter === 'その他' && mealCategory === 'その他');
-
-            return matchesSearch && matchesFilter;
-        });
-
-        displayMeals(filteredMeals);
+        console.log('🔍 filterMeals関数が呼び出されました（検索入力欄用）');
+        // 階層的フィルタリングを実行（検索語も含む）
+        applyHierarchicalFilter();
     }
 
     // ==========================================
@@ -845,26 +1158,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     function suggestMeal() {
         console.log('🎲 suggestMeal関数が呼び出されました');
-        const activeFilterChip = document.querySelector('.filter-chip.active');
-        if (!activeFilterChip) {
-            console.error('❌ アクティブなフィルターチップが見つかりません');
-            return;
-        }
-        const activeFilter = activeFilterChip.dataset.filter;
-        console.log(`🎲 フィルター: "${activeFilter}"`);
-        let candidates = allMeals;
-
-        if (activeFilter !== 'all') {
-            candidates = allMeals.filter(meal => {
-                const mealCategory = meal.カテゴリー || meal.category || '';
-                return (activeFilter === '牛' && mealCategory === '牛') ||
-                       (activeFilter === '豚' && mealCategory === '豚') ||
-                       (activeFilter === '鶏' && mealCategory === '鶏') ||
-                       (activeFilter === '海鮮' && mealCategory === '海鮮') ||
-                       (activeFilter === '野菜' && mealCategory === '野菜') ||
-                       (activeFilter === 'その他' && mealCategory === 'その他');
-            });
-        }
+        console.log(`🎲 フィルター - ジャンル: "${activeGenre || 'すべて'}", カテゴリー: "${activeCategory || 'すべて'}"`);
+        
+        let candidates = allMeals.filter(meal => {
+            // ジャンルでのフィルタリング
+            const mealGenre = meal.ジャンル || meal.genre || '';
+            const matchesGenre = !activeGenre || mealGenre === activeGenre;
+            
+            // カテゴリーでのフィルタリング
+            const mealCategory = meal.カテゴリー || meal.category || '';
+            const matchesCategory = !activeCategory || mealCategory === activeCategory;
+            
+            return matchesGenre && matchesCategory;
+        });
 
         if (candidates.length === 0) {
             document.getElementById('suggestionArea').innerHTML = '<p>該当するおかずがありません。</p>';
@@ -883,6 +1189,106 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${memo ? `<p><strong>メモ:</strong> ${memo}</p>` : ''}
             </div>
         `;
+    }
+
+    // ==========================================
+    // モーダルからの更新処理
+    // ==========================================
+    async function updateMealFromModal() {
+        console.log('💾 モーダルからの更新処理開始');
+        
+        try {
+            if (!editingId) {
+                console.error('❌ editingIdが設定されていません');
+                showToast('編集するデータが見つかりません');
+                return;
+            }
+            
+            // モーダル内のフォームからデータを取得
+            const modalMealName = document.getElementById('modalMealName');
+            const modalMainIngredient = document.getElementById('modalMainIngredient');
+            const modalMemo = document.getElementById('modalMemo');
+            
+            if (!modalMealName) {
+                console.error('❌ モーダル内の料理名入力欄が見つかりません');
+                return;
+            }
+            
+            const mealName = modalMealName.value.trim();
+            const mainIngredient = modalMainIngredient ? modalMainIngredient.value.trim() : '';
+            const memo = modalMemo ? modalMemo.value.trim() : '';
+            
+            // バリデーション
+            if (!mealName) {
+                showToast('料理名を入力してください');
+                return;
+            }
+            
+            // 自動記録: 更新ボタンを押した瞬間の日時を取得（ISO形式）
+            const now = new Date();
+            const lastEatenAtISO = now.toISOString();
+            const lastEatenAtDate = lastEatenAtISO.split('T')[0]; // YYYY-MM-DD形式に変換
+            
+            // データオブジェクトを構築
+            const data = {
+                料理名: mealName,
+                メイン食材: mainIngredient || '',
+                カテゴリー: modalSelectedCategory || '',
+                ジャンル: modalSelectedGenre || '',
+                メモ: memo || '',
+                最後に食べた日: lastEatenAtDate
+            };
+            
+            console.log('📝 更新するデータ:', data);
+            const jsonString = JSON.stringify(data);
+            console.log('📝 JSON文字列化:', jsonString);
+            
+            if (!jsonString || jsonString === '{}') {
+                console.error('❌ JSON文字列化に失敗しました');
+                throw new Error('データの更新に失敗しました: JSON形式への変換に失敗しました');
+            }
+            
+            // IDの型を確認し、数値型に統一
+            let idToUpdate = editingId;
+            if (typeof editingId === 'string' && !isNaN(editingId)) {
+                idToUpdate = parseInt(editingId, 10);
+                console.log(`🔄 IDを数値型に変換: "${editingId}" → ${idToUpdate}`);
+            }
+            
+            // Supabaseを更新
+            console.log(`📝 ID: ${idToUpdate} の上書き更新を実行します`);
+            const { data: updateResult, error } = await supabaseClient
+                .from('meals')
+                .update({ 
+                    name: jsonString
+                })
+                .eq('id', idToUpdate)
+                .select();
+            
+            if (error) {
+                console.error('❌ データベース更新エラー:', error);
+                throw error;
+            }
+            
+            if (updateResult && updateResult.length > 0) {
+                console.log(`✅ DB更新成功: ${updateResult.length}件のデータが更新されました`);
+                showToast(mealName + "を更新しました");
+                
+                // モーダルを閉じる
+                closeEditModal();
+                
+                // リストを再読み込み
+                console.log('🔄 データリストを更新します...');
+                await fetchMeals();
+            } else {
+                console.warn('⚠️ 更新されたデータが0件です');
+                throw new Error('データの更新に失敗しました: データが見つかりませんでした');
+            }
+            
+        } catch (err) {
+            console.error('❌ 更新処理中にエラー:', err);
+            showToast('エラーが発生しました: ' + err.message);
+        }
     }
 
     // ==========================================

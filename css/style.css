@@ -311,6 +311,20 @@ textarea {
     opacity: 0.6;
 }
 
+.filter-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.filter-label {
+    font-size: clamp(13px, 2.5vw, 14px);
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 4px;
+}
+
 .filter-chips {
     display: flex;
     flex-wrap: wrap;
@@ -344,6 +358,22 @@ textarea {
     color: white;
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     font-weight: 600;
+}
+
+/* ジャンルボタンのスタイル（アクティブ時） */
+.genre-chip.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* カテゴリーボタンのスタイル（アクティブ時） */
+.category-chip.active {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .suggestion-wrapper {
@@ -406,13 +436,26 @@ textarea {
 /* おかず1つずつのカード - プロが作った便利ツールのようなモダンなカード型デザイン */
 .meal-item {
     background: #ffffff;
-    padding: clamp(14px, 2.8vw, 18px);
+    padding: clamp(16px, 3vw, 20px);
     border-radius: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
     border: none;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     margin-bottom: 12px;
+}
+
+/* カテゴリによる背景色分け */
+.meal-item.category-meat {
+    background: #fff5f5;
+}
+
+.meal-item.category-seafood {
+    background: #f0f7ff;
+}
+
+.meal-item.category-vegetable-other {
+    background: #f6fff5;
 }
 
 /* カード内のコンテンツ - 料理名と日付を左右に配置 */
@@ -501,14 +544,37 @@ textarea {
     box-shadow: 0 1px 3px rgba(102, 126, 234, 0.3);
 }
 
+/* カテゴリタグの色分け（カテゴリごとに連動） */
+.category-tag.category-meat-tag {
+    background: #e74c3c;
+    box-shadow: 0 1px 3px rgba(231, 76, 60, 0.3);
+}
+
+.category-tag.category-seafood-tag {
+    background: #3498db;
+    box-shadow: 0 1px 3px rgba(52, 152, 219, 0.3);
+}
+
+.category-tag.category-vegetable-other-tag {
+    background: #27ae60;
+    box-shadow: 0 1px 3px rgba(39, 174, 96, 0.3);
+}
+
 .meal-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    gap: 10px;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 0;
     position: relative;
     width: 100%;
+}
+
+.meal-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
 }
 
 /* カード内の料理名 */
@@ -617,9 +683,7 @@ textarea {
     display: flex;
     gap: 8px;
     justify-content: flex-end;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #e8ecef;
+    align-items: center;
 }
 
 .edit-btn, .delete-btn {
@@ -785,6 +849,284 @@ textarea {
     .meal-header {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+/* ==========================================
+   編集用モーダルのスタイル
+   ========================================== */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+.modal-content {
+    position: relative;
+    background: #ffffff;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    z-index: 10001;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: clamp(20px, 4vw, 24px);
+    border-bottom: 1px solid #e8ecef;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: clamp(20px, 4vw, 24px);
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+}
+
+.modal-close-btn:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.modal-close-btn:active {
+    transform: scale(0.95);
+}
+
+.modal-body {
+    padding: clamp(20px, 4vw, 24px);
+}
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: clamp(16px, 3vw, 20px);
+    border-top: 1px solid #e8ecef;
+    justify-content: flex-end;
+}
+
+.modal-cancel-btn,
+.modal-update-btn {
+    padding: clamp(12px, 2.5vw, 14px) clamp(20px, 4vw, 24px);
+    border-radius: 12px;
+    font-size: clamp(14px, 2.5vw, 16px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+    min-height: 44px;
+}
+
+.modal-cancel-btn {
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.modal-cancel-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.modal-cancel-btn:active {
+    transform: scale(0.98);
+}
+
+.modal-update-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.modal-update-btn:hover {
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    transform: translateY(-1px);
+}
+
+.modal-update-btn:active {
+    transform: scale(0.98);
+}
+
+/* モーダル内のフォーム要素のスタイル */
+.modal-body .form-group {
+    margin-bottom: 20px;
+}
+
+.modal-body .form-group:last-of-type {
+    margin-bottom: 0;
+}
+
+.modal-genre-btn,
+.modal-category-btn {
+    padding: clamp(14px, 3vw, 18px) 12px;
+    border: 1px solid #d0d7de;
+    border-radius: 12px;
+    background: #ffffff;
+    font-size: clamp(14px, 3vw, 18px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #2c3e50;
+    min-height: clamp(50px, 8vw, 60px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.modal-genre-btn.active,
+.modal-category-btn.active {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.modal-body input[type="text"],
+.modal-body textarea {
+    width: 100%;
+    padding: clamp(14px, 3vw, 18px);
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    font-size: clamp(14px, 3vw, 18px);
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background: #ffffff;
+}
+
+.modal-body input[type="text"]:focus,
+.modal-body textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.modal-body textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* 検索モーダル用のスタイル */
+.search-modal-content {
+    max-width: 500px;
+}
+
+.search-select {
+    width: 100%;
+    padding: clamp(14px, 3vw, 18px);
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    font-size: clamp(14px, 3vw, 18px);
+    font-family: inherit;
+    background: #ffffff;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 12px;
+    padding-right: 40px;
+}
+
+.search-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.modal-search-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.modal-search-btn:hover {
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    transform: translateY(-1px);
+}
+
+.modal-search-btn:active {
+    transform: scale(0.98);
+}
+
+/* モーダルのレスポンシブ対応 */
+@media (max-width: 479px) {
+    .modal-content {
+        width: 95%;
+        max-height: 95vh;
+        border-radius: 12px;
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 16px;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-cancel-btn,
+    .modal-update-btn,
+    .modal-search-btn {
+        width: 100%;
     }
 }
 

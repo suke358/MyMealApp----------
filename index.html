@@ -71,17 +71,28 @@
     <div class="controls-row">
         <div class="search-box">
             <input type="text" id="searchInput" placeholder="食材名や料理名でさがす（例：鶏、にんじん、味噌）">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon" id="searchIconBtn">🔍</span>
         </div>
 
-        <div class="filter-chips" id="filterChips">
-            <button class="filter-chip active" data-filter="all">すべて</button>
-            <button class="filter-chip" data-filter="牛">🐄 牛</button>
-            <button class="filter-chip" data-filter="豚">🐷 豚</button>
-            <button class="filter-chip" data-filter="鶏">🐔 鶏</button>
-            <button class="filter-chip" data-filter="海鮮">🐟 海鮮</button>
-            <button class="filter-chip" data-filter="野菜">🥬 野菜</button>
-            <button class="filter-chip" data-filter="その他">🍽️ その他</button>
+        <div class="filter-section">
+            <div class="filter-label">ジャンル</div>
+            <div class="filter-chips genre-chips" id="genreChips">
+                <button class="filter-chip genre-chip active" data-genre="">すべて</button>
+                <button class="filter-chip genre-chip" data-genre="和食">🍱 和食</button>
+                <button class="filter-chip genre-chip" data-genre="洋食">🍝 洋食</button>
+                <button class="filter-chip genre-chip" data-genre="中華">🥟 中華</button>
+                <button class="filter-chip genre-chip" data-genre="麺類">🍜 麺類</button>
+            </div>
+            <div class="filter-label">カテゴリー</div>
+            <div class="filter-chips category-chips" id="categoryChips">
+                <button class="filter-chip category-chip active" data-category="">すべて</button>
+                <button class="filter-chip category-chip" data-category="牛">🐄 牛</button>
+                <button class="filter-chip category-chip" data-category="豚">🐷 豚</button>
+                <button class="filter-chip category-chip" data-category="鶏">🐔 鶏</button>
+                <button class="filter-chip category-chip" data-category="海鮮">🐟 海鮮</button>
+                <button class="filter-chip category-chip" data-category="野菜">🥬 野菜</button>
+                <button class="filter-chip category-chip" data-category="その他">🍽️ その他</button>
+            </div>
         </div>
     </div>
     
@@ -103,6 +114,99 @@
         <!-- 自動日時表示用の要素: JavaScriptで動的に生成される各カード内に
              料理名と日付（YYYY/MM/DD形式）が表示されます -->
     </div>
+    </div>
+
+    <!-- 検索用モーダル -->
+    <div id="searchModal" class="modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content search-modal-content">
+            <div class="modal-header">
+                <h2>🔍 検索</h2>
+                <button class="modal-close-btn" id="searchModalCloseBtn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="searchGenre">ジャンル</label>
+                    <select id="searchGenre" class="search-select">
+                        <option value="">すべて</option>
+                        <option value="和食">🍱 和食</option>
+                        <option value="洋食">🍝 洋食</option>
+                        <option value="中華">🥟 中華</option>
+                        <option value="麺類">🍜 麺類</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="searchCategory">カテゴリー</label>
+                    <select id="searchCategory" class="search-select">
+                        <option value="">すべて</option>
+                        <option value="牛">🐄 牛</option>
+                        <option value="豚">🐷 豚</option>
+                        <option value="鶏">🐔 鶏</option>
+                        <option value="海鮮">🐟 海鮮</option>
+                        <option value="野菜">🥬 野菜</option>
+                        <option value="その他">🍽️ その他</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-cancel-btn" id="searchModalCancelBtn">キャンセル</button>
+                <button type="button" class="modal-search-btn" id="searchModalSearchBtn">検索</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編集用モーダル -->
+    <div id="editModal" class="modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>編集</h2>
+                <button class="modal-close-btn" id="modalCloseBtn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>ジャンル</label>
+                    <div class="genre-buttons">
+                        <button type="button" class="modal-genre-btn" data-genre="和食">🍱 和食</button>
+                        <button type="button" class="modal-genre-btn" data-genre="洋食">🍝 洋食</button>
+                        <button type="button" class="modal-genre-btn" data-genre="中華">🥟 中華</button>
+                        <button type="button" class="modal-genre-btn" data-genre="麺類">🍜 麺類</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>カテゴリー</label>
+                    <div class="category-buttons">
+                        <button type="button" class="modal-category-btn" data-category="牛">🐄 牛</button>
+                        <button type="button" class="modal-category-btn" data-category="豚">🐷 豚</button>
+                        <button type="button" class="modal-category-btn" data-category="鶏">🐔 鶏</button>
+                        <button type="button" class="modal-category-btn" data-category="海鮮">🐟 海鮮</button>
+                        <button type="button" class="modal-category-btn" data-category="野菜">🥬 野菜</button>
+                        <button type="button" class="modal-category-btn" data-category="その他">🍽️ その他</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="modalMealName">料理名</label>
+                    <input type="text" id="modalMealName" placeholder="例：ハンバーグ定食">
+                </div>
+                
+                <div class="form-group">
+                    <label for="modalMainIngredient">メイン食材</label>
+                    <input type="text" id="modalMainIngredient" placeholder="例：牛肉、玉ねぎ">
+                </div>
+                
+                <div class="form-group">
+                    <label for="modalMemo">メモ・材料</label>
+                    <textarea id="modalMemo" placeholder="材料や作り方のメモを入力"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-cancel-btn" id="modalCancelBtn">キャンセル</button>
+                <button type="button" class="modal-update-btn" id="modalUpdateBtn">更新</button>
+            </div>
+        </div>
     </div>
 
     <!-- トースト通知用の要素 -->
