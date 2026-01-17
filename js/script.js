@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // ジャンルボタンのアクティブ状態を切り替え
             document.querySelectorAll('.genre-chip').forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
-            
+
             activeGenre = genre;
             console.log('🔍 ジャンルを選択しました:', genre || 'すべて');
             
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             applyHierarchicalFilter();
         });
     });
-    
+
     // カテゴリーボタンのイベントリスナー
     document.querySelectorAll('.category-chip').forEach(button => {
         button.addEventListener('click', () => {
@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('すべての料理を表示しました');
         }
     }
-    
+
     // ==========================================
     // 4. データ取得の開始（ここが重要！）
     // ==========================================
@@ -975,7 +975,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // ジャンルとカテゴリーのタグを生成
                 let genreTag = '';
                 if (genre) {
-                    const genreEmoji = genre === '和食' ? '🍱' : genre === '洋食' ? '🍝' : genre === '中華' ? '🥟' : genre === '麺類' ? '🍜' : '';
+                    const genreEmoji = genre === '和食' ? '🍱' : genre === '洋食' ? '🍝' : genre === '中華' ? '🥟' : genre === '麺類' ? '🍜' : genre === '食材' ? '😄' : '';
                     genreTag = `<span class="genre-tag">${genreEmoji} ${genre}</span>`;
                 }
                 
@@ -1054,10 +1054,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="meal-header">
                             <span class="meal-name">${name}</span>
                             <div class="meal-header-right">
-                                ${dateDisplayText ? `<span class="meal-date">${dateDisplayText}</span>` : ''}
-                                <div class="meal-actions">
-                                    <button class="edit-btn" data-index="${index}" data-id="${meal.id || ''}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
-                                    <button class="delete-btn" data-index="${index}" data-id="${meal.id || ''}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
+                            ${dateDisplayText ? `<span class="meal-date">${dateDisplayText}</span>` : ''}
+                    <div class="meal-actions">
+                        <button class="edit-btn" data-index="${index}" data-id="${meal.id || ''}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">✏️</button>
+                        <button class="delete-btn" data-index="${index}" data-id="${meal.id || ''}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🗑️</button>
                                 </div>
                             </div>
                         </div>
@@ -1166,11 +1166,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const matchesGenre = !activeGenre || mealGenre === activeGenre;
             
             // カテゴリーでのフィルタリング
-            const mealCategory = meal.カテゴリー || meal.category || '';
+                const mealCategory = meal.カテゴリー || meal.category || '';
             const matchesCategory = !activeCategory || mealCategory === activeCategory;
             
             return matchesGenre && matchesCategory;
-        });
+            });
 
         if (candidates.length === 0) {
             document.getElementById('suggestionArea').innerHTML = '<p>該当するおかずがありません。</p>';
